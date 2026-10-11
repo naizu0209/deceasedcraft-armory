@@ -259,6 +259,7 @@ def build_data(PACK, CACHE, OUT):
             ignite=b.get('ignite') if isinstance(b.get('ignite'), bool) else bool((b.get('ignite') or {}).get('entity')),
             bolt=dat.get('bolt', ''), modes=dat.get('fire_mode', []),
             burst=(dat.get('burst_data') or {}).get('count') if 'burst' in dat.get('fire_mode', []) else None,
+            modeAdj={m: v for m, v in (dat.get('fire_mode_adjust') or {}).items() if m in dat.get('fire_mode', []) and isinstance(v, dict)} or None,
             reloadType=rel.get('type', ''), reloadTac=(rel.get('feed') or {}).get('tactical'),
             reloadEmpty=(rel.get('feed') or {}).get('empty'),
             reloadTacTotal=(rel.get('cooldown') or {}).get('tactical'), reloadEmptyTotal=(rel.get('cooldown') or {}).get('empty'),
@@ -343,7 +344,20 @@ def build_data(PACK, CACHE, OUT):
     except Exception as e:
         print('no enchantment config', e)
 
-    json.dump(dict(meta=META, ench=ENCH, guns=G, attachments=A, ammo=AM, targets=TARGETS, names={**{g['id']: g['name'] for g in G}, **{a['id']: a['name'] for a in A}}),
+    # TaCZ Dual Wield: which guns may be dual-wielded and the recoil multiplier while doing so
+    DUAL = {}
+    try:
+        t = open(PACK + '/config/tacz_dual_wield-common.toml', encoding='utf-8-sig').read()
+        def tv(k):
+            m = re.search(r'(?m)^\s*' + k + r'\s*=\s*(.+?)\s*$', t)
+            return m.group(1) if m else None
+        arr = lambda k: re.findall(r'"([^"]*)"', tv(k) or '')
+        DUAL = dict(types=arr('allowedGunTypes') + (['smg'] if (tv('allowSmg') or '').lower() == 'true' else []),
+                    ids=arr('allowedGunIds'), denied=arr('deniedGunIds'), recoil=float(tv('dualWieldRecoilMultiplier') or 1))
+    except Exception as e:
+        print('no dual wield config', e)
+
+    json.dump(dict(meta=META, ench=ENCH, dual=DUAL, guns=G, attachments=A, ammo=AM, targets=TARGETS, names={**{g['id']: g['name'] for g in G}, **{a['id']: a['name'] for a in A}}),
               open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     print('guns', len(G), 'atts', len(A), 'ammo', len(AM))
     print('guns no data', [g['id'] for g in G if g['damage'] is None])

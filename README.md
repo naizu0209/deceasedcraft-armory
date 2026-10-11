@@ -7,7 +7,7 @@ Open `index.html` in a browser. No server and no install; the data is inlined in
 
 - **Guns / Attachments / Ammo**: search, filter and sort by damage, DPS, armor penetration, recoil, spread and more. Each item has a sheet with its recipe and what it fits. Only craftable items show by default; **Show uncraftable** adds the rest.
 - **Special ammo**: the *Ammo* select on the Guns tab applies FMJ, Hollow-Point, Incendiary, High Explosive or Slug to every gun that accepts it.
-- **Gunsmith**: build a gun with attachments and TaCZ enchantments (Enchantments Overhaul). Stat bars follow the in-game gun refit screen; hovering an attachment shows its effects.
+- **Gunsmith**: build a gun with attachments and TaCZ enchantments (Enchantments Overhaul). Stat bars follow the in-game gun refit screen; hovering an attachment shows its effects. Guns whose stats change by fire mode get a fire-mode switch (pack `fire_mode_adjust`); pistols and SMGs get a dual-wield switch (TaCZ Dual Wield: both guns fire, so 2x fire rate and magazine, recoil x3 from its config). An attachment's sheet shows what it does to the chosen gun.
 - **Shooting range**: fire at a dummy with recoil and spread for each stance, set the target's health and armor, and see DPS and the recoil pattern.
 
 ## How the numbers work
@@ -52,4 +52,4 @@ Mob presets and ingredient icons are kept in `data.json`: most come from the Dec
 
 ## Credits
 
-Data and icons come from the DeceasedCraft modpack, its TaCZ gun packs and the DeceasedCraft City Item Guide. This is an unofficial fan tool.
+Data and icons come from the DeceasedCraft modpack, its TaCZ gun packs and the DeceasedCraft City Item Guide. Made by naizu0209. This is an unofficial fan tool.
