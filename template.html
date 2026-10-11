@@ -63,8 +63,6 @@ h1 small{display:block;font:500 12px/1.4 var(--f-mono);letter-spacing:.08em;colo
 .gs-b i.g{background:#55ff55}.gs-b i.r{background:#ff5555}
 .gs-v{white-space:nowrap}.gs-v em{font-style:normal}
 .gs-v em.g{color:#55ff55}.gs-v em.r{color:#ff5555}
-.gs-r.chg{background:rgba(85,255,85,.12);box-shadow:-6px 0 0 rgba(85,255,85,.12),6px 0 0 rgba(85,255,85,.12)}.gs-r.chg .gs-l{color:#55ff55}
-.spec.chg{background:rgba(47,122,60,.16);box-shadow:inset 3px 0 0 var(--good)}
 .gs-n{color:#999;font-size:11px;margin-top:6px}
 @media (max-width:480px){.gs-r{grid-template-columns:78px 1fr;gap:4px 8px}.gs-v{grid-column:1/-1;margin-top:-2px}}
 .simpair{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));align-items:start}
@@ -146,6 +144,8 @@ tbody tr.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent
 .specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
 .spec{background:var(--panel);padding:7px 9px;min-width:0}
 .spec span{display:block;font:500 10px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.spec span.g{color:var(--good)}.spec span.b{color:var(--bad)}
+.spec span.nv{display:inline;font:inherit;text-transform:none;letter-spacing:0}
 .spec b{font:600 15px var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .spec em{font:400 11px var(--f-mono);font-style:normal;color:var(--muted)}
 .ladder{display:flex;flex-wrap:wrap;gap:4px}
@@ -167,7 +167,7 @@ details summary b{color:var(--fg)}
 
 <div class="wrap">
   <header>
-    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack <span id="packVer">CB 5.11.19</span> · by naizu0209 · <span id="webVer">v1.0.86</span></small></h1>
+    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack <span id="packVer">CB 5.11.19</span> · by naizu0209 · <span id="webVer">v1.0.90</span></small></h1>
     <div class="tally" id="tally"></div>
   </header>
 
@@ -497,7 +497,8 @@ function chips() {
   const noAll = true;   // always one type selected, most common first (no All button)
   if (noAll && !tc[st.type[st.tab]]) st.type[st.tab] = byCount[0];   // default: the most common type
   $('f-type').innerHTML = `<span class="lbl">${st.tab === 'guns' ? 'Type' : 'Slot'}</span>` + [...(noAll ? [] : ['']), ...order].map(t =>
-    `<button class="chip" data-f="type" data-v="${t}" aria-pressed="${(st.type[st.tab] || '') === t}">${t ? esc(tm[t] || t) : 'All'}${t ? `<i>${tc[t]}</i>` : ''}</button>`).join('');
+    `<button class="chip" data-f="type" data-v="${t}" aria-pressed="${(st.type[st.tab] || '') === t}">${t ? esc(tm[t] || t) : 'All'}${t ? `<i>${tc[t]}</i>` : ''}</button>`).join('')
+    + (st.tab === 'atts' ? `<button class="chip" type="button" data-none="1" title="Take the attachment off this slot in the Gunsmith">None</button>` : '');
 }
 
 function table() {
@@ -558,7 +559,7 @@ function gameStats(g, ids, en, opt) {
     const diff = +(c - a).toFixed(d), up = diff > 0, good = (better === 'high') === up;
     const cls = diff === 0 ? '' : good ? 'g' : 'r';
     const txt = (pre || '') + c.toFixed(d) + u + (diff === 0 ? '' : ` <em class="${cls}">(${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(d)}${u === '%' ? '%' : ''})</em>`);
-    return `<div class="gs-r${diff === 0 ? '' : ' chg'}"><span class="gs-l">${l}</span><span class="gs-b"><i style="width:${(lo * 100).toFixed(2)}%"></i>${hi > lo ? `<i class="${cls || 'g'}" style="width:${((hi - lo) * 100).toFixed(2)}%"></i>` : ''}</span><span class="gs-v">${txt}</span></div>`;
+    return `<div class="gs-r"><span class="gs-l">${l}</span><span class="gs-b"><i style="width:${(lo * 100).toFixed(2)}%"></i>${hi > lo ? `<i class="${cls || 'g'}" style="width:${((hi - lo) * 100).toFixed(2)}%"></i>` : ''}</span><span class="gs-v">${txt}</span></div>`;
   }).join('');
   return `<div class="gs"><div class="gs-h"><kbd>S</kbd><span>Fire Mode: ${esc(mode)}</span></div>${html}<div class="gs-n">Bars use TaCZ's own scales. Ammo Speed is the pack value; this pack doubles it in flight.</div></div>`;
 }
@@ -639,8 +640,8 @@ function attOnGun(a) {
     ['Recoil V', b => b.recoilV, 2, 0, ''], ['Recoil H', b => b.recoilH, 2, 0, ''], ['Weight', b => b.weight, 2, 0, ' kg'],
   ].map(([l, f, d, hi, u]) => {
     const x = f(b0), y = f(b1); if (!isFinite(x) || !isFinite(y) || +(y - x).toFixed(d) === 0) return '';
-    const good = (y > x) === !!hi;
-    return spec(l, `${x.toFixed(d)} → ${y.toFixed(d)}${u}`, `<span class="${good ? 'g' : 'b'}">${y > x ? '+' : '−'}${Math.abs(y - x).toFixed(d)}</span>`).replace('class="spec"', 'class="spec chg"');
+    const c = (y > x) === !!hi ? 'g' : 'b';
+    return spec(l, `${x.toFixed(d)} → <span class="nv ${c}">${y.toFixed(d)}${u}</span>`);
   }).join('');
   return `<div class="sec">${head}${rows ? `<div class="specs">${rows}</div>` : '<div class="dim">No stat change on this gun.</div>'}</div>`;
 }
@@ -708,6 +709,7 @@ $('craftBtn').addEventListener('click', () => {
   });
 }
 document.querySelector('.filters').addEventListener('click', e => {
+  if (e.target.closest('[data-none]')) { SIM.att[st.type.atts] = ''; setTab('sim'); renderSimAtts(); updateSim(); return; }
   const c = e.target.closest('.chip[data-f]'); if (!c) return;
   st[c.dataset.f][st.tab] = c.dataset.v || null; chips(); table();
 });
