@@ -127,7 +127,6 @@ tbody tr.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent
 .nm{font-weight:600}
 .sub{display:block;font:400 11px var(--f-mono);color:var(--muted)}
 .tag{display:inline-block;font:500 10px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;padding:1px 5px;border:1px solid var(--line-hi);border-radius:2px;color:var(--muted);white-space:nowrap}
-.tag.t-loot{color:var(--brass);border-color:var(--brass)}
 .dim{color:var(--muted)}
 .eff{font:400 12px var(--f-mono)}
 .g{color:var(--good)} .b{color:var(--bad)}
@@ -157,15 +156,13 @@ details{margin-top:6px}
 details summary{cursor:pointer;font:600 12px var(--f-mono);color:var(--muted);padding:3px 0}
 details summary b{color:var(--fg)}
 .empty{padding:28px 16px;color:var(--muted);text-align:center}
-.notes{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:grid;gap:4px;max-width:110ch}
-.notes code{font-family:var(--f-mono);font-size:11px}
 .count{font:500 12px var(--f-mono);color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){tbody tr{transition:background .12s}}
 </style>
 
 <div class="wrap">
   <header>
-    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack CB 5.11.19</small></h1>
+    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack <span id="packVer">CB 5.11.19</span></small></h1>
     <div class="tally" id="tally"></div>
   </header>
 
@@ -193,18 +190,7 @@ details summary b{color:var(--fg)}
 
   <section id="simWrap" hidden>
     <div class="simgrid" id="simGrid"></div>
-    <div class="notes" style="margin-top:14px">
-      <div>Attachments combine as (base + addends) × (1 + percents) × multipliers. Each pellet lands inside the stance's spread cone and is tested against a 1.8 m player shape. Damage falls off by range step, then armor applies per pellet.</div>
-      <div>Recoil follows TaCZ's camera code: one curve per shot through the gun's recoil keyframes, scaled by scope zoom, prone and attachments, and kick that has not recovered stays as climb. Controlled assumes an average player cancels about 70% of the vertical and 50% of the sideways climb.</div>
-      <div>Not modeled: bullet drop, moving targets, armor enchants, mob health scaling and real mob hitboxes. Target presets use the City Item Guide's base health and armor.</div>
-    </div>
   </section>
-  <div class="notes" id="listNotes">
-    <div>Stats are base values read from the gun packs in <code>overrides/tacz/</code>, before attachments. Server multipliers (<code>tacz-server.toml</code>, <code>tacztweaks.json</code>, <code>taczadditions-server.toml</code>) are all 1.0, so the numbers apply in-game as written.</div>
-    <div>Exception: <code>GlobalBulletSpeedModifier = 2.0</code> in <code>tacz-common.toml</code> doubles every bullet speed. Speeds below show base and effective.</div>
-    <div>DPS = damage per shot × RPM ÷ 60, body shots, before falloff. TaCZ splits a shot's damage evenly across its pellets. "DPS vs armor" lets the armor-pen share bypass armor and runs the rest of each pellet through vanilla armor reduction for the armor points you enter (toughness is not modeled). It ignores Protection enchants and mob resistances. The Ammo select applies one special ammo (FMJ, Hollow-Point, Incendiary, High Explosive, Slug…) to guns that accept it, using that ammo's stat changes (damage, armor pen, pierce, headshot, fire rate). It takes the extended-mag slot. Each slot type shows only the attributes most of its attachments have; rarer ones are listed under Bonus. Attachment columns show each attachment's change to the gun's base stat (green = better, red = worse). Click a column header to sort; recoil, spread and ADS time sort the biggest reduction first. ADS time mixes percent and seconds, so seconds are compared against an assumed 0.25 s base. Loot locations come from the City Item Guide data. No attachment appears in that building loot, so attachments come from the gunsmith tables.</div>
-    <div>Workbench: BF1 recipes only show on the BF1 workbench and Suffuse recipes only on the Suffuse workbench (their recipe filters). Everything else is on the standard Gunsmith table.</div>
-  </div>
 </div>
 
 <div class="tip" id="tip" hidden role="tooltip"></div>
@@ -238,10 +224,10 @@ const nameOf = id => NAMES[id] || prettyId(id);
 
 // ---- derived data
 // TaCZ: "damage" is per shot; each pellet deals damage / bullet_amount.
+if (D.meta && D.meta.pack) document.getElementById('packVer').textContent = D.meta.pack;
 const GUNS = D.guns.map(g => ({...g,
   perPellet: g.damage != null ? g.damage / (g.pellets || 1) : null,
   dps: g.damage != null && g.rpm ? g.damage * g.rpm / 60 : null,
-  lootN: g.loot.buildings.length + g.loot.mobs.length,
   hay: [g.name, g.id, g.ammoName, g.ammo, g.type, GTYPE[g.type], g.desc, ...(g.recipe ? g.recipe.mats.map(m => prettyId(m.id) + ' ' + m.id) : [])].join(' ').toLowerCase()
 }));
 const GUN_BY_ID = Object.fromEntries(GUNS.map(g => [g.id, g]));
@@ -519,15 +505,7 @@ function table() {
 
 const spec = (label, val, extra) => `<div class="spec"><span>${label}</span><b>${val}</b>${extra ? ` <em>${extra}</em>` : ''}</div>`;
 const matsHtml = (r, extra) => r ? `<div class="dim" style="font-size:12px;margin-bottom:6px">${esc(r.table)}${extra || ''}</div><ul class="mats">${r.mats.map(m => `<li><span class="ing">${ingIco(m.id)}<span>${esc((D.ingNames || {})[m.id] || prettyId(m.id))} <span class="sub">${esc(m.id)}</span></span></span><b>× ${m.n}</b></li>`).join('')}</ul>`
-  : '<div class="dim">No crafting recipe in the gun packs. Loot, NPC drop or admin spawn only.</div>';
-const lootHtml = L => {
-  if (!L.buildings.length && !L.mobs.length) return '<div class="dim">Not found in building loot or mob drops in the guide data.</div>';
-  let s = '';
-  if (L.buildings.length) s += `<div style="font-size:13px">Best roll: <b style="color:var(--brass)">${fx(L.best, 1)}%</b> at ${esc(L.bestAt)}</div>
-    <details><summary>In <b>${L.buildings.length}</b> building${L.buildings.length > 1 ? 's' : ''}</summary><div class="alist" style="margin-top:6px">${L.buildings.map(b => `<span class="tag">${esc(b)}</span>`).join('')}</div></details>`;
-  if (L.mobs.length) s += `<div style="font-size:13px;margin-top:6px">Dropped by: ${L.mobs.map(esc).join(', ')}</div>`;
-  return s;
-};
+  : '<div class="dim">No crafting recipe in the gun packs.</div>';
 
 function sheet() {
   const id = st.sel[st.tab], el = $('sheet');
@@ -617,7 +595,6 @@ function gunSheet(g) {
     ${spec('ADS spread', fx(g.aimInacc))}
     ${spec('Recoil V / H', fx(g.recoilV) + ' / ' + fx(g.recoilH))}
   </div><div class="dim" style="font-size:12px;margin-top:6px">Move speed: ${esc(mvTxt)}${g.heat ? ' · overheats' : ''}</div></div>
-  <div class="sec"><h3>Where to get it</h3>${lootHtml(g.loot)}</div>
   <div class="sec"><h3>Crafting</h3>${matsHtml(g.recipe, preset)}</div>
   <div class="sec"><h3>Attachments · ${g.allowed.length}</h3>${atts || '<div class="dim">Takes no attachments.</div>'}</div>`;
 }
@@ -650,10 +627,10 @@ function ammoSheet(a) {
 function setTab(t) {
   if (t === 'sim') {
     for (const b of $('tabs').children) b.setAttribute('aria-selected', b.dataset.tab === 'sim');
-    $('simWrap').hidden = false; $('filtersWrap').hidden = true; $('mainWrap').hidden = true; $('listNotes').hidden = true;
+    $('simWrap').hidden = false; $('filtersWrap').hidden = true; $('mainWrap').hidden = true;
     initSim(); return;
   }
-  $('simWrap').hidden = true; $('filtersWrap').hidden = false; $('mainWrap').hidden = false; $('listNotes').hidden = false;
+  $('simWrap').hidden = true; $('filtersWrap').hidden = false; $('mainWrap').hidden = false;
   for (const k of KINDS) { cancelAnimationFrame(SIM.du[k].raf); SIM.du[k].raf = 0; SIM.du[k].duel = null; }
   st.tab = t;
   for (const b of $('tabs').children) b.setAttribute('aria-selected', b.dataset.tab === t);
@@ -723,7 +700,7 @@ $('sheet').addEventListener('click', e => {
 });
 
 // ================= Gunsmith (2D simulator) =================
-const SIM = {du: {dummy: {duel: null, raf: 0}, target: {duel: null, raf: 0}}, rec: false, reaim: true, gun: 'tacz:ak47', att: {}, ench: {}, stance: 'aim', range: 10, zone: 'body', hp: 20, armor: 0, preset: '', speed: 1, duel: null, raf: 0, timer: 0, ready: false};
+const SIM = {du: {dummy: {duel: null, raf: 0}, target: {duel: null, raf: 0}}, rec: false, reaim: true, gun: 'tacz:ak47', att: {}, ench: {}, stance: 'aim', range: 10, zone: 'body', hp: 20, armor: 0, bonus: 0, preset: '', speed: 1, duel: null, raf: 0, timer: 0, ready: false};
 const TARGETS = D.targets || [];
 const STANCES = [['aim', 'Aiming'], ['stand', 'Standing'], ['move', 'Moving'], ['sneak', 'Sneaking'], ['lie', 'Prone']];
 const SLOT_ORDER = ['scope', 'muzzle', 'grip', 'stock', 'extended_mag', 'laser'];
@@ -776,24 +753,32 @@ function applyMods(base, mods) {
   return (v + add) * (1 + pct) * mul;
 }
 
-// TaCZ Enchantments Overhaul, values from the pack's tacz_enchantments_overhaul.json5 (max level, effect per level)
+// TaCZ Enchantments Overhaul: per-level effect and level cap come from the pack's tacz_enchantments_overhaul.json5 (D.ench), defaults are the 5.11.19 values
+const EN_DEF = {firepower: [0.1, 5], bullseye: [0.5, 2], deep_impact: [0.05, 3], punch_through: [1, 2], precision: [0.05, 3], capacity: [0.25, 4], bullet_retention: [0.05, 3]};
+const EN_KEY = {firepower: 'firepower_damage_multiplier', bullseye: 'bullseye_headshot_bonus', deep_impact: 'deep_impact_armor_piercing_bonus', punch_through: 'punch_through_count', precision: 'precision_accuracy_bonus', capacity: 'capacity_multiplier', bullet_retention: 'bullet_retention_chance'};
+const EN = {};
+for (const k in EN_DEF) {
+  const c = (D.ench && D.ench.cfg) || {};
+  EN[k] = {per: c[EN_KEY[k]] != null ? +c[EN_KEY[k]] : EN_DEF[k][0], max: c[k + '_max_level'] != null ? +c[k + '_max_level'] : EN_DEF[k][1]};
+}
+const enPct = v => Math.round(v * 1000) / 10;
 const ENCH = [
-  ['firepower', 'Firepower', 5, '+10% damage per level'],
-  ['bullseye', 'Bullseye', 2, '+50% headshot damage per level'],
-  ['deep_impact', 'Deep Impact', 3, '+5% armor penetration per level'],
-  ['punch_through', 'Punch Through', 2, '+1 extra entity hit per level'],
-  ['precision', 'Precision', 3, '−5% spread per level'],
-  ['capacity', 'Capacity', 4, '+25% magazine per level'],
-  ['bullet_retention', 'Bullet Retention', 3, '5% chance per level a shot uses no ammo'],
+  ['firepower', 'Firepower', EN.firepower.max, `+${enPct(EN.firepower.per)}% damage per level`],
+  ['bullseye', 'Bullseye', EN.bullseye.max, `+${enPct(EN.bullseye.per)}% headshot damage per level`],
+  ['deep_impact', 'Deep Impact', EN.deep_impact.max, `+${enPct(EN.deep_impact.per)}% armor penetration per level`],
+  ['punch_through', 'Punch Through', EN.punch_through.max, `+${EN.punch_through.per} extra ${EN.punch_through.per === 1 ? 'entity' : 'entities'} hit per level`],
+  ['precision', 'Precision', EN.precision.max, `−${enPct(EN.precision.per)}% spread per level`],
+  ['capacity', 'Capacity', EN.capacity.max, `+${enPct(EN.capacity.per)}% magazine per level`],
+  ['bullet_retention', 'Bullet Retention', EN.bullet_retention.max, `${enPct(EN.bullet_retention.per)}% chance per level a shot uses no ammo`],
 ];
 // guns the pack bars from Capacity
-const ENCH_NO_CAP = new Set(['tacz:db_short', 'tacz:db_long', 'tacz:lonetrail', 'tacz:rpg7', 'rebel:mta', 'tacz:m320', 'suffuse:aiyasinrpg', 'suffuse:m79', 'suffuse:m203', 'suffuse:pf98a', 'suffuse:qlu911', 'rebel:t70th', 'rebel:bq01', 'bf1:lunge_mine', 'bf1:f_faust', 'bf1:tg1918', 'bf1:martini', 'tacz:springfield1873']);
+const ENCH_NO_CAP = new Set(D.ench && D.ench.noCap ? D.ench.noCap : ['tacz:db_short', 'tacz:db_long', 'tacz:lonetrail', 'tacz:rpg7', 'rebel:mta', 'tacz:m320', 'suffuse:aiyasinrpg', 'suffuse:m79', 'suffuse:m203', 'suffuse:pf98a', 'suffuse:qlu911', 'rebel:t70th', 'rebel:bq01', 'bf1:lunge_mine', 'bf1:f_faust', 'bf1:tg1918', 'bf1:martini', 'tacz:springfield1873']);
 function buildStats(g, ids, en) {
   en = en || {};
   const E = id => (ATT_BY_ID[id] || {}).effects || {};
   const C = k => ids.map(i => E(i)[k]).filter(v => v != null);
   const S = (k, s) => ids.map(i => (E(i)[k] || {})[s]).filter(v => v != null);
-  const damage = applyMods(g.damage || 0, C('damage')) * (1 + 0.1 * (en.firepower || 0));
+  const damage = applyMods(g.damage || 0, C('damage')) * (1 + EN.firepower.per * (en.firepower || 0));
   const ratio = g.damage ? damage / g.damage : 1;
   const falloff = (g.falloff || []).length
     ? g.falloff.map(([d, dm]) => [d === 'infinite' ? Infinity : applyMods(d, C('effective_range')), dm * ratio])
@@ -803,21 +788,21 @@ function buildStats(g, ids, en) {
   const base = g.inacc || {}, spread = {};
   for (const k of ['stand', 'move', 'sneak', 'lie', 'aim']) {
     const b0 = base[k] != null ? base[k] : (base.stand != null ? base.stand : g.hip || 0);
-    spread[k] = Math.max(0, applyMods(b0, mods[k]) * (1 - 0.05 * (en.precision || 0)));
+    spread[k] = Math.max(0, applyMods(b0, mods[k]) * (1 - EN.precision.per * (en.precision || 0)));
   }
   const pitchExtra = ids.map(i => (E(i).recoil_modifier || {}).pitch).filter(v => v != null).map(v => ({percent: v}));
   const yawExtra = ids.map(i => (E(i).recoil_modifier || {}).yaw).filter(v => v != null).map(v => ({percent: v}));
   const lvl = Math.max(0, ...C('extended_mag_level'));
   const mag0 = lvl > 0 && g.xmag && g.xmag[lvl - 1] ? g.xmag[lvl - 1] : (g.mag || 1);
-  const mag = Math.max(1, Math.round(mag0 * (1 + 0.25 * (en.capacity || 0))));
+  const mag = Math.max(1, Math.round(mag0 * (1 + EN.capacity.per * (en.capacity || 0))));
   const first = falloff.find(f => isFinite(f[0]));
   return {
     pellets: g.pellets || 1, damage, ratio, falloff,
-    pen: Math.min(1, Math.max(0, applyMods(g.armorIgnore || 0, C('armor_ignore')) + 0.05 * (en.deep_impact || 0))),
-    headshot: applyMods(g.headshot || 1, C('head_shot')) * (1 + 0.5 * (en.bullseye || 0)),
+    pen: Math.min(1, Math.max(0, applyMods(g.armorIgnore || 0, C('armor_ignore')) + EN.deep_impact.per * (en.deep_impact || 0))),
+    headshot: applyMods(g.headshot || 1, C('head_shot')) * (1 + EN.bullseye.per * (en.bullseye || 0)),
     rpm: Math.max(1, applyMods(g.rpm || 600, C('rpm'))),
     speed: (g.speed || 300) * 2 * applyMods(1, C('ammo_speed')),
-    pierce: applyMods(g.pierce || 1, C('pierce')) + (en.punch_through || 0), keep: 0.05 * (en.bullet_retention || 0), knockback: applyMods(g.knockback || 0, C('knockback')),
+    pierce: applyMods(g.pierce || 1, C('pierce')) + EN.punch_through.per * (en.punch_through || 0), keep: EN.bullet_retention.per * (en.bullet_retention || 0), knockback: applyMods(g.knockback || 0, C('knockback')),
     spread, ads: Math.max(0, applyMods(g.aim == null ? 0.25 : g.aim, C('ads').concat(C('ads_addend')))),
     rec: {p: (g.recKeys || {}).pitch || [], y: (g.recKeys || {}).yaw || [], crawl: g.crawlRec == null ? 0.5 : g.crawlRec,
       pm: S('recoil', 'pitch').concat(pitchExtra), ym: S('recoil', 'yaw').concat(yawExtra),
@@ -893,14 +878,14 @@ function shootOnce(b, o, rand, pts, off) {
     const x = aimX + u * Math.cos(a), y = aimY + u * Math.sin(a);
     const part = partAt(x, y);
     if (part === 'miss') miss++;
-    else { if (part === 'head') head++; else body++; dmg += hitAfterArmor(per * (part === 'head' ? b.headshot : 1), b.pen, o.armor); }
+    else { if (part === 'head') head++; else body++; dmg += hitAfterArmor(per * (part === 'head' ? b.headshot : 1), b.pen, o.armor) * (1 + (o.bonus || 0) / 100); }
     if (pts) pts.push({x, y, part});
   }
   return {dmg, head, body, miss};
 }
 
 function fight(b, g, o, rand, rec, lim) {
-  let hp = o.hp, ammo = b.mag, shots = 0, reloads = 0;
+  let hp = o.hp, ammo = b.mag, shots = 0, reloads = 0, rt = 0;
   let t = (o.stance === 'aim' ? b.ads : 0) + o.range / Math.max(1, b.speed);
   const gap = 60 / b.rpm, rl = g.reloadEmptyTotal || g.reloadEmpty || 2.5, ev = rec ? [] : null;
   const rp = o.recRes ? recoilPre(b, o.stance, b.mag + 1, rand, o.recRes) : null; let ri = 0;
@@ -910,7 +895,7 @@ function fight(b, g, o, rand, rec, lim) {
   const settle = rc ? Math.max(rc.p ? rc.p.end : 0, rc.y ? rc.y.end : 0) : 0, aimY0 = aimYOf(o.zone);
   let misses = 0, reaims = 0;
   while (hp > 0 && shots < (lim || (rec ? 400 : 250))) {
-    if (ammo <= 0) { if (ev) ev.push({t, type: 'reload', until: t + rl}); t += rl; ammo = b.mag; reloads++; ri = 0; }
+    if (ammo <= 0) { if (ev) ev.push({t, type: 'reload', until: t + rl}); t += rl; rt += rl; ammo = b.mag; reloads++; ri = 0; }
     const off = rp ? rp[Math.min(ri++, rp.length - 1)] : null;
     const pts = rec ? [] : null, r = shootOnce(b, o, rand, pts, off);
     const kept = b.keep > 0 && rand() < b.keep;
@@ -925,31 +910,30 @@ function fight(b, g, o, rand, rec, lim) {
       t += settle; ri = 0; misses = 0; reaims++;
     }
   }
-  return {t, shots, reloads, reaims, killed: hp <= 0, ev};
+  return {t, rt, shots, reloads, reaims, killed: hp <= 0, ev};
 }
 
 function quant(sorted, q) { return sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))] : NaN; }
 function summarize(b, g, o, nFights, nShots) {
-  const rand = rng(12345), T = [], SH = [];
+  const rand = rng(12345), T = [], T0 = [], SH = [];
   let kills = 0, rel = 0;
   for (let i = 0; i < nFights; i++) {
     const f = fight(b, g, o, rand, false);
-    if (f.killed) { kills++; T.push(f.t); SH.push(f.shots); rel += f.reloads; }
+    if (f.killed) { kills++; T.push(f.t); T0.push(f.t - f.rt); SH.push(f.shots); rel += f.reloads; }
   }
-  T.sort((a, c) => a - c); SH.sort((a, c) => a - c);
+  T.sort((a, c) => a - c); T0.sort((a, c) => a - c); SH.sort((a, c) => a - c);
   let dmg = 0, hits = 0, heads = 0, pel = 0;
   for (let i = 0; i < nShots; i++) { const r = shootOnce(b, o, rand, null); dmg += r.dmg; hits += r.head + r.body; heads += r.head; pel += b.pellets; }
-  const avg = dmg / nShots, gap = 60 / b.rpm, rl = g.reloadEmptyTotal || g.reloadEmpty || 2.5;
+  const avg = dmg / nShots;
   return {
-    killRate: kills / nFights, ttkMed: quant(T, 0.5), ttkP90: quant(T, 0.9), shotsMed: quant(SH, 0.5), reloads: kills ? rel / kills : 0,
+    killRate: kills / nFights, ttk0: quant(T0, 0.5), ttkMed: quant(T, 0.5), ttkP90: quant(T, 0.9), shotsMed: quant(SH, 0.5), reloads: kills ? rel / kills : 0,
     avgDmg: avg, hitPct: hits / pel, headPct: hits ? heads / hits : 0,
-    sustained: (b.mag / (1 - (b.keep || 0)) * avg) / (b.mag / (1 - (b.keep || 0)) * gap + rl),
   };
 }
 // damage of one trigger pull if every pellet connects with the body / head (after armor)
-function idealHit(b, r, armor, head) {
+function idealHit(b, r, armor, head, bonus) {
   const per = shotDamageAt(b, r) / b.pellets;
-  return hitAfterArmor(per * (head ? b.headshot : 1), b.pen, armor) * b.pellets;
+  return hitAfterArmor(per * (head ? b.headshot : 1), b.pen, armor) * b.pellets * (1 + (bonus || 0) / 100);
 }
 
 // ---------- canvas helpers
@@ -1055,7 +1039,7 @@ function freezeDuel(kind) {
 }
 
 // ---------- controls + results
-const simOpts = () => ({range: SIM.range, stance: SIM.stance, zone: SIM.zone, armor: SIM.armor, hp: SIM.hp, recRes: recRes(), reaim: SIM.reaim});
+const simOpts = () => ({range: SIM.range, stance: SIM.stance, zone: SIM.zone, armor: SIM.armor, bonus: SIM.bonus, hp: SIM.hp, recRes: recRes(), reaim: SIM.reaim});
 const simIds = () => Object.values(SIM.att).filter(Boolean);
 // Gunsmith choices live only in the open page (a reload starts fresh); drop what older versions saved
 try { localStorage.removeItem('armory_gunsmith'); } catch (e) {}
@@ -1188,6 +1172,7 @@ function renderSimShell() {
     <label class="fld"><span>Preset</span><select id="simPreset" class="simsel"><option value="">Custom</option>${TARGETS.map((t, i) => `<option value="${i}">${esc(t.name)} · ${fx(t.hp, 0)} hp · ${fx(t.armor, 0)} armor</option>`).join('')}</select></label>
     <label class="fld"><span>Health</span><input id="simHp" class="simsel" type="number" min="1" step="1"></label>
     <label class="fld"><span>Armor</span><input id="simArmor" class="simsel" type="number" min="0" max="100" step="1"></label>
+    <label class="fld"><span>Damage received (+%)</span><input id="simBonus" class="simsel" type="number" min="-100" max="1000" step="5"></label>
   </div>
   <div class="sec"><h3>Shooting range</h3>
     <label class="fld"><span>Range (m)</span><span style="display:flex;gap:8px;align-items:center"><input id="simRange" type="range" min="1" max="120" step="1" style="flex:1;min-width:0"><b id="simRangeVal" style="font-family:var(--f-mono);min-width:3ch;text-align:right"></b></span></label>
@@ -1216,18 +1201,18 @@ function renderSimShell() {
 // what a level of each enchantment adds, for the hover text
 function enchTxt(k, l) {
   if (!l) return 'No enchantment';
-  const pct = v => (v > 0 ? '+' : '−') + Math.abs(Math.round(v * 10) / 10) + '%';
+  const pct = v => (v > 0 ? '+' : '−') + Math.abs(Math.round(v * 10) / 10) + '%', p = EN[k].per;
   switch (k) {
-    case 'firepower': return pct(10 * l) + ' damage';
-    case 'bullseye': return pct(50 * l) + ' headshot damage';
-    case 'deep_impact': return pct(5 * l) + ' armor penetration (added on top of the gun)';
-    case 'punch_through': return '+' + l + ' extra ' + (l > 1 ? 'entities' : 'entity') + ' hit';
-    case 'precision': return pct(-5 * l) + ' spread';
+    case 'firepower': return pct(enPct(p) * l) + ' damage';
+    case 'bullseye': return pct(enPct(p) * l) + ' headshot damage';
+    case 'deep_impact': return pct(enPct(p) * l) + ' armor penetration (added on top of the gun)';
+    case 'punch_through': return '+' + p * l + ' extra ' + (p * l > 1 ? 'entities' : 'entity') + ' hit';
+    case 'precision': return pct(-enPct(p) * l) + ' spread';
     case 'capacity': {
       const g = GUN_BY_ID[SIM.gun], m0 = buildStats(g, simIds(), {...simEn(), capacity: 0}).mag;
-      return pct(25 * l) + ' magazine (' + m0 + ' → ' + Math.max(1, Math.round(m0 * (1 + 0.25 * l))) + ')';
+      return pct(enPct(p) * l) + ' magazine (' + m0 + ' → ' + Math.max(1, Math.round(m0 * (1 + p * l))) + ')';
     }
-    case 'bullet_retention': return pct(5 * l).replace('+', '') + ' chance a shot uses no ammo';
+    case 'bullet_retention': return pct(enPct(p) * l).replace('+', '') + ' chance a shot uses no ammo';
   }
   return '';
 }
@@ -1240,7 +1225,7 @@ function renderSimEnch() {
 }
 function syncSimInputs() {
   const setv = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
-  setv('simHp', SIM.hp); setv('simArmor', SIM.armor); setv('simRange', SIM.range); $('simRangeVal').textContent = SIM.range;
+  setv('simHp', SIM.hp); setv('simArmor', SIM.armor); setv('simBonus', SIM.bonus); setv('simRange', SIM.range); $('simRangeVal').textContent = SIM.range;
   $('simPreset').value = SIM.preset;
   for (const b of $('simStance').children) b.setAttribute('aria-pressed', b.dataset.stance === SIM.stance);
   for (const b of $('simZone').children) b.setAttribute('aria-pressed', b.dataset.zone === SIM.zone);
@@ -1327,14 +1312,13 @@ function updateSim(skipCharts) {
   $('simFlags').innerHTML = [b.silenced && 'Suppressed', b.explode && 'Explosive rounds', b.ignite && 'Incendiary'].filter(Boolean).map(t => `<span class="tag">${t}</span>`).join('');
 
   const r = summarize(b, g, o, 300, 1500);
-  const hitBody = idealHit(b, SIM.range, SIM.armor, false), hitHead = idealHit(b, SIM.range, SIM.armor, true);
+  const hitBody = idealHit(b, SIM.range, SIM.armor, false, SIM.bonus), hitHead = idealHit(b, SIM.range, SIM.armor, true, SIM.bonus);
   const cards = [
     ['Hit chance', fx(r.hitPct * 100, 0) + '%', b.pellets > 1 ? 'of ' + b.pellets + ' pellets' : 'per shot'],
     ['Per hit (body / head)', fx(hitBody, 1) + ' / ' + fx(hitHead, 1), 'after armor, no spread'],
-    ['Expected per shot', fx(r.avgDmg, 1), 'with misses'],
     ['Shots to kill', isFinite(r.shotsMed) ? fx(r.shotsMed, 0) : '—', 'median'],
-    ['Time to kill', isFinite(r.ttkMed) ? fx(r.ttkMed, 2) + ' s' : 'no kill', isFinite(r.ttkP90) ? '90%: ' + fx(r.ttkP90, 2) + ' s' : ''],
-    ['Sustained DPS', fx(r.sustained, 0), 'with reloads'],
+    ['Time to kill', isFinite(r.ttk0) ? fx(r.ttk0, 2) + ' s' : 'no kill', 'no reload'],
+    ['Time to kill with reload', isFinite(r.ttkMed) ? fx(r.ttkMed, 2) + ' s' : 'no kill', isFinite(r.ttkP90) ? '90%: ' + fx(r.ttkP90, 2) + ' s' : ''],
   ];
   $('simCards').innerHTML = cards.map(([l, v, e]) => `<div class="spec"><span>${l}</span><b>${v}</b>${e ? ` <em>${e}</em>` : ''}</div>`).join('');
   syncSimInputs(); recoilCards();
@@ -1362,6 +1346,7 @@ function initSim() {
       const t = e.target, v = parseFloat(t.value);
       if (t.id === 'simHp' && v > 0) { SIM.hp = v; SIM.preset = ''; updateSim(); }
       else if (t.id === 'simArmor' && v >= 0) { SIM.armor = Math.min(100, v); SIM.preset = ''; updateSim(); }
+      else if (t.id === 'simBonus' && isFinite(v)) { SIM.bonus = Math.max(-100, Math.min(1000, v)); updateSim(); }
       else if (t.id === 'simRange') { SIM.range = v; updateSim(); }
     });
     wrap.addEventListener('click', e => {
