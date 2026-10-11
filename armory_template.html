@@ -1,0 +1,1387 @@
+<meta charset="utf-8">
+<title>DeceasedCraft Armory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: field-manual reference — filter strip on top, dense sortable ledger left, spec sheet docked right (stacks below on phones). */
+:root{
+  --bg:#f3f2ea; --panel:#fbfaf4; --sunk:#e8e7dc; --line:#d3d1c1; --line-hi:#a9a78f;
+  --fg:#23241b; --muted:#6b6c58; --accent:#5f6a1f; --accent-soft:rgba(95,106,31,.12);
+  --brass:#8a6516; --good:#2f7a3c; --bad:#a63a2a; --row-hi:rgba(95,106,31,.08);
+  --f-display:'Saira Condensed','Arial Narrow',Arial,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14150f; --panel:#1b1d14; --sunk:#10110c; --line:#2f3222; --line-hi:#4d5236;
+  --fg:#dedbc4; --muted:#8f9172; --accent:#b8c26a; --accent-soft:rgba(184,194,106,.13);
+  --brass:#d3a64a; --good:#7bd389; --bad:#f08a76; --row-hi:rgba(184,194,106,.07); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14150f; --panel:#1b1d14; --sunk:#10110c; --line:#2f3222; --line-hi:#4d5236;
+  --fg:#dedbc4; --muted:#8f9172; --accent:#b8c26a; --accent-soft:rgba(184,194,106,.13);
+  --brass:#d3a64a; --good:#7bd389; --bad:#f08a76; --row-hi:rgba(184,194,106,.07); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--f-body);padding-inline:16px;padding-block:18px 40px}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:2px solid var(--fg);padding-bottom:10px}
+h1{font:800 clamp(28px,4vw,42px)/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;margin:0;text-wrap:balance}
+h1 small{display:block;font:500 12px/1.4 var(--f-mono);letter-spacing:.08em;color:var(--muted);text-transform:none;margin-top:6px}
+.tally{display:flex;gap:18px;font:500 12px var(--f-mono);color:var(--muted);flex-wrap:wrap}
+.tally b{display:block;font:700 24px/1 var(--f-display);color:var(--fg);letter-spacing:.02em}
+.tabs{display:flex;gap:0;border:1px solid var(--line-hi);width:max-content;max-width:100%;overflow-x:auto}
+.tabs button{font:700 15px var(--f-display);letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--muted);border:0;border-right:1px solid var(--line-hi);padding:8px 18px;cursor:pointer}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+.filters{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.search{flex:0 1 280px;min-width:0;font:15px var(--f-body);padding:9px 12px;background:var(--panel);color:var(--fg);border:1px solid var(--line-hi);border-radius:2px}
+.search:focus,button:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chipset{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.chipset .lbl{font:500 11px var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-right:2px}
+.chip{font:500 12px var(--f-mono);padding:4px 9px;border:1px solid var(--line-hi);background:transparent;color:var(--fg);border-radius:2px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip i{font-style:normal;color:var(--muted);margin-left:4px}
+.sortsel{font:500 12px var(--f-mono);padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line-hi);border-radius:2px;max-width:100%}
+.armorin{width:72px}
+.sortsel:focus{outline:2px solid var(--accent);outline-offset:1px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:16px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+.ico{width:36px;height:36px;object-fit:contain;flex:none;background:var(--sunk);border:1px solid var(--line);border-radius:2px}
+.ico.none{display:inline-block}
+.simgrid{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:16px;align-items:stretch}
+@media (max-width:980px){.simgrid{grid-template-columns:minmax(0,1fr)}}
+.gs{background:#222;color:#ccc;font:13px/1.15 var(--f-mono);padding:8px 10px 9px;border:1px solid var(--line-hi);font-variant-numeric:tabular-nums}
+.gs-h{display:flex;gap:8px;align-items:center;margin-bottom:5px}
+.gs-h kbd{font:600 12px var(--f-mono);background:#3a3a3a;border:1px solid #555;color:#eee;padding:1px 6px}
+.gs-r{display:grid;grid-template-columns:minmax(78px,96px) minmax(60px,1fr) minmax(104px,150px);gap:10px;align-items:center;padding:2.5px 0}
+.gs-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs-b{display:flex;height:6px;background:#000}
+.gs-b i{display:block;height:100%;background:#fff}
+.gs-b i.g{background:#55ff55}.gs-b i.r{background:#ff5555}
+.gs-v{white-space:nowrap}.gs-v em{font-style:normal}
+.gs-v em.g{color:#55ff55}.gs-v em.r{color:#ff5555}
+.gs-n{color:#999;font-size:11px;margin-top:6px}
+@media (max-width:480px){.gs-r{grid-template-columns:78px 1fr;gap:4px 8px}.gs-v{grid-column:1/-1;margin-top:-2px}}
+.simpair{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));align-items:start}
+.slotbtn{display:flex;align-items:center;gap:8px;width:100%;min-width:0;text-align:left;font:13px var(--f-body);padding:5px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line-hi);border-radius:2px;cursor:pointer}
+.slotbtn:hover:not(:disabled){border-color:var(--accent)}
+.slotbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.slotbtn:disabled{opacity:.5;cursor:not-allowed;border-style:dashed}
+.slotbtn .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slotbtn .sub{color:var(--muted);font:11px var(--f-mono)}
+.slotbtn .car{color:var(--muted)}
+.slotbtn.big{gap:12px;padding:8px 14px}
+.slotbtn.big .ico.sm{width:48px;height:48px}
+.slotbtn.big .nm{font:700 17px var(--f-body)}
+.slotbtn.big .sub{font-size:12px}
+.pk{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+.pk[hidden]{display:none}
+.pkbox{background:var(--panel);border:1px solid var(--line-hi);width:min(980px,100%);max-height:min(88vh,860px);display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.pkhead{display:flex;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.pkhead h3{margin:0;font:700 14px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+.pkhead input{flex:1;min-width:0}
+.pkbody{overflow:auto;padding:4px 16px 16px}
+.pkgrp{font:500 10px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.pkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.pktile{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;padding:10px 6px 8px;background:var(--bg);color:var(--fg);border:1px solid var(--line);font:inherit;cursor:pointer;min-width:0}
+.pktile:hover{border-color:var(--accent)}
+.pktile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pktile[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--sunk)}
+.pktile .ico{width:56px;height:56px;image-rendering:pixelated}
+.pktile b{font:600 12px/1.2 var(--f-body);overflow-wrap:anywhere}
+.pktile em{font:400 10px var(--f-mono);font-style:normal;color:var(--muted)}
+.pkempty{padding:24px 0;color:var(--muted)}
+.tip{position:fixed;z-index:80;max-width:300px;background:var(--panel);color:var(--fg);border:1px solid var(--accent);box-shadow:0 8px 24px rgba(0,0,0,.5);padding:10px 12px;pointer-events:none;font:12px/1.4 var(--f-body)}
+.tip[hidden]{display:none}
+.tip h4{margin:0 0 2px;font:700 14px var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.tip .meta{font:11px var(--f-mono);color:var(--muted);margin-bottom:6px}
+.tip p{margin:0 0 6px;color:var(--muted)}
+.tip .row{display:flex;justify-content:space-between;gap:12px;font:12px var(--f-mono)}
+.tip .none{color:var(--muted)}
+.simpanel{border:1px solid var(--line-hi);background:var(--panel);min-width:0}
+.simsel{width:100%;min-width:0;font:13px var(--f-body);padding:6px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line-hi);border-radius:2px}
+.simsel:focus{outline:2px solid var(--accent);outline-offset:1px}
+.fld{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;align-items:center;margin:7px 0;font-size:13px}
+.fld>span:first-child{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+.cvwrap{width:100%;min-width:0}
+.cvwrap canvas{display:block;max-width:100%}
+#simTable th{cursor:default;position:static}
+.ico.sm{width:26px;height:26px;image-rendering:pixelated}
+.ing{display:flex;gap:8px;align-items:center;min-width:0}
+.ico.big{float:right;width:72px;height:72px;margin:0 0 8px 12px}
+.namecell{display:flex;gap:9px;align-items:center;min-width:0}
+.namecell>div{min-width:0}
+.ledger{border:1px solid var(--line);background:var(--panel);overflow-x:auto;max-height:78vh;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+thead th{position:sticky;top:0;background:var(--sunk);z-index:1;font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line-hi);white-space:nowrap;cursor:pointer;user-select:none}
+thead th.num{text-align:right}
+thead th[data-dir="asc"]::after{content:" ▲";color:var(--accent)}
+thead th[data-dir="desc"]::after{content:" ▼";color:var(--accent)}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--row-hi)}
+tbody tr.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.nm{font-weight:600}
+.sub{display:block;font:400 11px var(--f-mono);color:var(--muted)}
+.tag{display:inline-block;font:500 10px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;padding:1px 5px;border:1px solid var(--line-hi);border-radius:2px;color:var(--muted);white-space:nowrap}
+.tag.t-loot{color:var(--brass);border-color:var(--brass)}
+.dim{color:var(--muted)}
+.eff{font:400 12px var(--f-mono)}
+.g{color:var(--good)} .b{color:var(--bad)}
+.sheet{border:1px solid var(--line-hi);background:var(--panel);position:sticky;top:calc(env(safe-area-inset-top,0px) + 10px);max-height:calc(100vh - 20px);overflow-y:auto}
+@media (max-width:980px){.sheet{position:static;max-height:none}}
+.sheet-h{padding:14px 16px 12px;border-bottom:2px solid var(--fg)}
+.sheet-h h2{font:800 26px/1.05 var(--f-display);letter-spacing:.03em;margin:0 0 6px;text-transform:uppercase;text-wrap:balance}
+.sheet-h .ids{font:400 11px var(--f-mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sheet-h p{margin:8px 0 0;color:var(--muted);font-size:13px;max-width:60ch}
+.sec{padding:12px 16px;border-bottom:1px solid var(--line)}
+.sec h3{font:700 13px var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+.specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.spec{background:var(--panel);padding:7px 9px;min-width:0}
+.spec span{display:block;font:500 10px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.spec b{font:600 15px var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.spec em{font:400 11px var(--f-mono);font-style:normal;color:var(--muted)}
+.ladder{display:flex;flex-wrap:wrap;gap:4px}
+.ladder div{flex:1 1 80px;border:1px solid var(--line);padding:5px 8px;font:12px var(--f-mono)}
+.ladder div b{display:block;font-size:15px}
+ul.mats{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+ul.mats li{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px dotted var(--line);padding:2px 0}
+ul.mats li b{font-family:var(--f-mono);white-space:nowrap}
+.alist{display:flex;flex-wrap:wrap;gap:4px}
+.alink{font:500 12px var(--f-body);padding:3px 8px;border:1px solid var(--line-hi);border-radius:2px;background:transparent;color:var(--fg);cursor:pointer;text-align:left}
+.alink:hover{border-color:var(--accent);color:var(--accent)}
+details{margin-top:6px}
+details summary{cursor:pointer;font:600 12px var(--f-mono);color:var(--muted);padding:3px 0}
+details summary b{color:var(--fg)}
+.empty{padding:28px 16px;color:var(--muted);text-align:center}
+.notes{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:grid;gap:4px;max-width:110ch}
+.notes code{font-family:var(--f-mono);font-size:11px}
+.count{font:500 12px var(--f-mono);color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){tbody tr{transition:background .12s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack CB 5.11.19</small></h1>
+    <div class="tally" id="tally"></div>
+  </header>
+
+  <div class="tabs" role="tablist" id="tabs">
+    <button role="tab" id="tab-guns" data-tab="guns" aria-selected="true">Guns</button>
+    <button role="tab" id="tab-atts" data-tab="atts" aria-selected="false">Attachments</button>
+    <button role="tab" id="tab-ammo" data-tab="ammo" aria-selected="false">Ammo</button>
+    <button role="tab" id="tab-sim" data-tab="sim" aria-selected="false">Gunsmith</button>
+  </div>
+
+  <div class="filters" id="filtersWrap">
+    <input id="q" class="search" type="search" placeholder="Search name, id, caliber, material…" autocomplete="off">
+    <button class="chip" id="craftBtn" type="button" aria-pressed="false" title="Include items that have no gunsmith recipe in the gun packs (loot, KubeJS or admin spawn only)">Show uncraftable</button>
+    <span class="count" id="count"></span>
+    <div class="chipset" id="f-pack"></div>
+    <div class="chipset" id="f-type"></div>
+    <div class="chipset" id="f-gun" style="flex-basis:100%" hidden><span class="lbl">Gun</span><button class="slotbtn big" id="gunBtn" type="button" aria-haspopup="dialog" style="width:auto;min-width:340px;max-width:100%"></button></div>
+    <div class="chipset" id="armorWrap" style="flex-basis:100%"><label class="lbl" for="armorIn">Target armor</label><input id="armorIn" class="sortsel armorin" type="number" min="0" max="100" step="1" inputmode="numeric"><label class="lbl" for="ammoSel" style="margin-left:10px">Ammo</label><select id="ammoSel" class="sortsel" title="Special ammo applied to every gun that accepts it"></select></div>
+  </div>
+
+  <div class="main" id="mainWrap">
+    <div class="ledger"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <aside class="sheet" id="sheet"></aside>
+  </div>
+
+  <section id="simWrap" hidden>
+    <div class="simgrid" id="simGrid"></div>
+    <div class="notes" style="margin-top:14px">
+      <div>Attachments combine as (base + addends) × (1 + percents) × multipliers. Each pellet lands inside the stance's spread cone and is tested against a 1.8 m player shape. Damage falls off by range step, then armor applies per pellet.</div>
+      <div>Recoil follows TaCZ's camera code: one curve per shot through the gun's recoil keyframes, scaled by scope zoom, prone and attachments, and kick that has not recovered stays as climb. Controlled assumes an average player cancels about 70% of the vertical and 50% of the sideways climb.</div>
+      <div>Not modeled: bullet drop, moving targets, armor enchants, mob health scaling and real mob hitboxes. Target presets use the City Item Guide's base health and armor.</div>
+    </div>
+  </section>
+  <div class="notes" id="listNotes">
+    <div>Stats are base values read from the gun packs in <code>overrides/tacz/</code>, before attachments. Server multipliers (<code>tacz-server.toml</code>, <code>tacztweaks.json</code>, <code>taczadditions-server.toml</code>) are all 1.0, so the numbers apply in-game as written.</div>
+    <div>Exception: <code>GlobalBulletSpeedModifier = 2.0</code> in <code>tacz-common.toml</code> doubles every bullet speed. Speeds below show base and effective.</div>
+    <div>DPS = damage per shot × RPM ÷ 60, body shots, before falloff. TaCZ splits a shot's damage evenly across its pellets. "DPS vs armor" lets the armor-pen share bypass armor and runs the rest of each pellet through vanilla armor reduction for the armor points you enter (toughness is not modeled). It ignores Protection enchants and mob resistances. The Ammo select applies one special ammo (FMJ, Hollow-Point, Incendiary, High Explosive, Slug…) to guns that accept it, using that ammo's stat changes (damage, armor pen, pierce, headshot, fire rate). It takes the extended-mag slot. Each slot type shows only the attributes most of its attachments have; rarer ones are listed under Bonus. Attachment columns show each attachment's change to the gun's base stat (green = better, red = worse). Click a column header to sort; recoil, spread and ADS time sort the biggest reduction first. ADS time mixes percent and seconds, so seconds are compared against an assumed 0.25 s base. Loot locations come from the City Item Guide data. No attachment appears in that building loot, so attachments come from the gunsmith tables.</div>
+    <div>Workbench: BF1 recipes only show on the BF1 workbench and Suffuse recipes only on the Suffuse workbench (their recipe filters). Everything else is on the standard Gunsmith table.</div>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden role="tooltip"></div>
+<div class="pk" id="pk" hidden role="dialog" aria-modal="true" aria-labelledby="pkTitle"><div class="pkbox">
+  <div class="pkhead"><h3 id="pkTitle"></h3><input id="pkQ" class="simsel" type="search" placeholder="Search" aria-label="Search"><button class="chip" id="pkCraft" type="button" aria-pressed="false">Show uncraftable</button><button class="chip" id="pkX" type="button" aria-label="Close">✕</button></div>
+  <div class="pkbody" id="pkBody"></div>
+</div></div>
+<script>
+const D = __DATA__;
+const PACK = {tacz:'TaCZ', gz:'GZ', bf1:'BF1', suffuse:'Suffuse', rebel:'Rebel', gucci_attachments:'Gucci'};
+const GTYPE = {pistol:'Pistol', smg:'SMG', shotgun:'Shotgun', rifle:'Rifle', mg:'HMG', sniper:'Sniper', rpg:'Special'};
+const GUN_ORDER = ['pistol', 'smg', 'shotgun', 'rifle', 'mg', 'sniper', 'rpg'];
+const ATYPE = {scope:'Scope', muzzle:'Muzzle', grip:'Grip', stock:'Stock', extended_mag:'Mag', laser:'Laser', bayonet:'Bayonet'};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fx = (n, d=2) => n == null || n === '' ? '—' : (typeof n === 'number' ? +n.toFixed(d) : n);
+const prettyId = id => {
+  if (!id) return '';
+  const tag = id.startsWith('#');
+  let s = id.replace(/^#/, '').split(':').pop();
+  if (tag && s.includes('/')) { const [a, b] = s.split('/'); s = b + ' ' + a; }
+  s = s.replace(/[_/]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return tag ? s + ' (any)' : s;
+};
+const ICONS = D.icons || {};
+const ico = (id, cls = '') => ICONS[id] ? `<img class="ico ${cls}" src="${ICONS[id]}" alt="" loading="lazy" decoding="async">` : `<span class="ico none ${cls}"></span>`;
+const nameCell = (x, n) => `<div class="namecell">${ico(x.id)}<div><span class="nm">${esc(n)}</span><span class="sub">${esc(x.id)}</span></div></div>`;
+const ING = D.ingIcons || {};
+const ingIco = id => ING[id] ? `<img class="ico sm" src="${ING[id]}" alt="" loading="lazy" decoding="async">` : '<span class="ico sm none"></span>';
+const NAMES = D.names;
+const nameOf = id => NAMES[id] || prettyId(id);
+
+// ---- derived data
+// TaCZ: "damage" is per shot; each pellet deals damage / bullet_amount.
+const GUNS = D.guns.map(g => ({...g,
+  perPellet: g.damage != null ? g.damage / (g.pellets || 1) : null,
+  dps: g.damage != null && g.rpm ? g.damage * g.rpm / 60 : null,
+  lootN: g.loot.buildings.length + g.loot.mobs.length,
+  hay: [g.name, g.id, g.ammoName, g.ammo, g.type, GTYPE[g.type], g.desc, ...(g.recipe ? g.recipe.mats.map(m => prettyId(m.id) + ' ' + m.id) : [])].join(' ').toLowerCase()
+}));
+const GUN_BY_ID = Object.fromEntries(GUNS.map(g => [g.id, g]));
+
+// ---- armor model
+// TaCZ splits each hit: armor_ignore share bypasses armor, the rest goes through vanilla
+// CombatRules.getDamageAfterAbsorb: dmg *= 1 - f/25.
+// Armor points only (no toughness): f = clamp(armor - dmg / 2, armor / 5, 20).
+let ARMOR_PTS = 0;
+try { const s = parseFloat(localStorage.getItem('armory_armor_pts2')); if (s >= 0 && s <= 100) ARMOR_PTS = s; } catch (e) {}
+function hitAfterArmor(d, ai, A) {
+  ai = Math.min(1, Math.max(0, ai || 0));
+  const dn = d * (1 - ai);
+  const f = Math.min(20, Math.max(A * 0.2, A - dn / 2));
+  return d * ai + dn * (1 - f / 25);
+}
+// Special ammo (ammo mods that sit in the extended-mag slot): the chosen one is applied to every gun that accepts it,
+// through the same stat builder the Gunsmith uses (e.g. FMJ: damage x0.9, armor_ignore "if (x > 0.4) then y = x * 1.5 else y = x * 1.75 end").
+let SPECIAL = '';
+try { SPECIAL = localStorage.getItem('armory_ammomod') || (localStorage.getItem('armory_fmj') === '1' ? 'tacz:ammo_mod_fmj' : ''); } catch (e) {}
+const ammoOn = g => !!SPECIAL && g.allowed.includes(SPECIAL);
+const amCache = new Map();
+const amStats = g => { let b = amCache.get(g.id); if (!b) amCache.set(g.id, b = buildStats(g, [SPECIAL])); return b; };
+function effPen(g, on = ammoOn(g)) { return on ? amStats(g).pen : (g.armorIgnore || 0); }
+// Damage and DPS follow the chosen ammo for guns that accept it.
+const dmgOf = (g, on = ammoOn(g)) => g.damage == null ? null : on ? amStats(g).damage : g.damage;
+const dpsOf = (g, on = ammoOn(g)) => g.damage == null || !g.rpm ? null : dmgOf(g, on) * (on ? amStats(g).rpm : g.rpm) / 60;
+function armorDps(g, on = ammoOn(g)) {
+  if (g.perPellet == null || !g.rpm) return null;
+  const d = g.perPellet * (on ? amStats(g).ratio : 1);
+  return hitAfterArmor(d, effPen(g, on), ARMOR_PTS) * (g.pellets || 1) * (on ? amStats(g).rpm : g.rpm) / 60;
+}
+// Change the chosen ammo makes to a stat (null when none is chosen or the gun can't take it), shown as +/- amount, green up / red down.
+function ammoDelta(g, fn, digits, scale, suffix) {
+  if (!ammoOn(g)) return null;
+  const a = fn(g, true), b = fn(g, false);
+  if (a == null || b == null) return null;
+  // subtract the rounded numbers the table shows, so the +/- always matches the two values next to it
+  const d = +(a * scale).toFixed(digits) - +(b * scale).toFixed(digits);
+  if (Math.abs(d) < 0.5 * 10 ** -digits) return null;
+  return {cls: d > 0 ? 'g' : 'b', txt: (d > 0 ? '+' : '−') + fx(Math.abs(d), digits) + suffix};
+}
+function withDelta(g, fn, valTxt, digits, scale, suffix, extra) {
+  const d = ammoDelta(g, fn, digits, scale, suffix);
+  if (!d) return valTxt + (extra || '');
+  return `<span class="${d.cls}">${valTxt}</span>${extra || ''}<span class="sub ${d.cls}">${d.txt}</span>`;
+}
+const dlt = (g, fn, digits, scale, suffix) => { const d = ammoDelta(g, fn, digits, scale, suffix); return d ? `<span class="${d.cls}">${d.txt}</span>` : ''; };
+let SHOW_UNCRAFT = false;   // default off: only craftable items
+try { SHOW_UNCRAFT = localStorage.getItem('armory_uncraft4') === '1'; } catch (e) {}
+const ATTS = D.attachments.map(a => ({...a,
+  hay: [a.name, a.id, a.type, ATYPE[a.type], a.desc, ...(a.recipe ? a.recipe.mats.map(m => prettyId(m.id) + ' ' + m.id) : [])].join(' ').toLowerCase()
+}));
+const ATT_BY_ID = Object.fromEntries(ATTS.map(a => [a.id, a]));
+const AMMO = (() => {
+  const m = new Map(D.ammo.map(a => [a.id, {...a, pack: a.id.split(':')[0]}]));
+  for (const g of GUNS) {
+    if (!g.ammo) continue;
+    if (!m.has(g.ammo)) m.set(g.ammo, {id: g.ammo, name: g.ammoName || prettyId(g.ammo), guns: [], recipe: null, pack: g.ammo.split(':')[0]});
+    const a = m.get(g.ammo); if (!a.guns.includes(g.id)) a.guns.push(g.id);
+  }
+  return [...m.values()].map(a => ({...a, n: a.guns.length, hay: [a.name, a.id, ...a.guns.map(nameOf)].join(' ').toLowerCase()}));
+})();
+const AMMO_BY_ID = Object.fromEntries(AMMO.map(a => [a.id, a]));
+
+// ---- attachment effect wording
+const LOWER_BETTER = new Set(['ads','ads_addend','inaccuracy','aim_inaccuracy','sneak_inaccuracy','lie_inaccuracy','inaccuracy_addend','recoil','recoil_modifier','heat']);
+const ELABEL = {ads:'ADS time', ads_addend:'ADS time', inaccuracy:'Hip spread', aim_inaccuracy:'ADS spread', sneak_inaccuracy:'Crouch spread',
+  lie_inaccuracy:'Prone spread', inaccuracy_addend:'Spread', rpm:'Fire rate', damage:'Damage', armor_ignore:'Armor pen', ammo_speed:'Bullet speed',
+  effective_range:'Eff. range', head_shot:'Headshot', pierce:'Pierce', heat:'Heat'};
+function modParts(v) {
+  if (typeof v === 'number') return v ? {txt: (v > 0 ? '+' : '') + fx(v, 3), dir: Math.sign(v)} : null;
+  if (!v || typeof v !== 'object') return null;
+  if (v.function) return {txt: 'formula: ' + v.function.replace(/^.*?y =/, 'y =').slice(0, 48), dir: 0};
+  const a = v.addend || 0, p = v.percent || 0, m = v.multiplier == null ? 1 : v.multiplier;
+  const out = [];
+  if (a) out.push((a > 0 ? '+' : '') + fx(a, 3));
+  if (p) out.push((p > 0 ? '+' : '') + fx(p * 100, 1) + '%');
+  if (m !== 1) out.push((m > 1 ? '+' : '−') + fx(Math.abs(m - 1) * 100, 1) + '%');
+  if (!out.length) return null;
+  return {txt: out.join(' '), dir: Math.sign(a + p + (m - 1))};
+}
+function effects(a) {
+  const out = [];
+  const push = (label, part, key) => {
+    if (!part) return;
+    const lb = LOWER_BETTER.has(key);
+    const cls = part.dir === 0 ? '' : ((part.dir > 0) !== lb ? 'g' : 'b');
+    out.push({label, txt: part.txt, cls});
+  };
+  for (const [k, v] of Object.entries(a.effects || {})) {
+    if (k === 'recoil') { push('Recoil V', modParts(v.pitch), k); push('Recoil H', modParts(v.yaw), k); }
+    else if (k === 'recoil_modifier') { push('Recoil V', modParts(v.pitch), k); push('Recoil H', modParts(v.yaw), k); }
+    else if (k === 'silence') { if (v.use_silence_sound || v.distance_addend) out.push({label: 'Suppressed', txt: v.distance_addend ? fx(v.distance_addend) + ' m sound range' : 'quiet shot sound', cls: 'g'}); }
+    else if (k === 'extended_mag_level') out.push({label: 'Ext. mag', txt: 'level ' + v, lvl: v, cls: 'g'});
+    else if (k === 'melee') out.push({label: 'Melee', txt: fx(v.damage) + ' dmg · ' + fx(v.distance) + ' m reach', cls: 'g'});
+    else if (k === 'explosion') out.push({label: 'Explosive rounds', txt: v.explode ? 'yes' : 'no', cls: ''});
+    else if (k === 'ignite') out.push({label: 'Incendiary', txt: v.entity ? 'sets targets on fire' : 'blocks', cls: ''});
+    else if (k === 'heat') push('Heat rate', modParts(v.heat_rate), k);
+    else push(ELABEL[k] || prettyId(k), modParts(v), k);
+  }
+  if (a.zoom && a.zoom.length) out.unshift({label: 'Zoom', txt: a.zoom.map(z => fx(z, 2) + '×').join(' / '), cls: ''});
+  if (a.weight) out.push({label: 'Weight', txt: '+' + fx(a.weight) + ' kg', cls: 'b'});
+  return out;
+}
+// ---- numeric attachment attributes (sortable)
+const ATTR_DEFS = [['zoom', 'Zoom'], ['recV', 'Recoil V'], ['recH', 'Recoil H'], ['hip', 'Hip spread'], ['adsSpr', 'ADS spread'], ['adsT', 'ADS time'],
+  ['dmg', 'Damage'], ['pen', 'Armor pen'], ['rpmM', 'Fire rate'], ['rng', 'Range'], ['hs', 'Headshot'], ['spd', 'Bullet speed']];
+const LOWER = new Set(['recV', 'recH', 'hip', 'adsSpr', 'adsT']);
+const OTHER_LABELS = new Set(['Suppressed', 'Ext. mag', 'Melee', 'Explosive rounds', 'Incendiary', 'Heat rate', 'Pierce', 'Crouch spread', 'Prone spread']);
+function numMod(v) {
+  if (typeof v === 'number') return v ? {rel: 0, add: v, val: v, txt: (v > 0 ? '+' : '') + fx(v, 3)} : null;
+  if (!v || typeof v !== 'object') return null;
+  if (v.function) {
+    const ms = [...v.function.matchAll(/x\s*\*\s*([\d.]+)/g)].map(m => parseFloat(m[1]));
+    if (!ms.length) return {rel: 0, add: 0, val: null, txt: /y\s*=\s*1\b/.test(v.function) ? 'set to 1' : 'formula'};
+    const lo = Math.min(...ms), hi = Math.max(...ms);
+    return {rel: lo - 1, add: 0, val: lo - 1, txt: '+' + fx((lo - 1) * 100, 0) + (hi !== lo ? '–' + fx((hi - 1) * 100, 0) : '') + '%'};
+  }
+  const p = modParts(v); if (!p) return null;
+  const add = v.addend || 0, rel = (v.percent || 0) + ((v.multiplier == null ? 1 : v.multiplier) - 1);
+  return {rel, add, val: rel || add, txt: p.txt};
+}
+function attrMap(a) {
+  const e = a.effects || {}, o = {};
+  const put = (k, m) => { if (m) o[k] = {val: m.val == null ? null : m.val, txt: m.txt}; };
+  const nm = k => numMod(e[k]);
+  put('recV', numMod(e.recoil && e.recoil.pitch) || numMod(e.recoil_modifier && e.recoil_modifier.pitch));
+  put('recH', numMod(e.recoil && e.recoil.yaw) || numMod(e.recoil_modifier && e.recoil_modifier.yaw));
+  put('hip', nm('inaccuracy') || nm('inaccuracy_addend'));
+  put('adsSpr', nm('aim_inaccuracy'));
+  const am = nm('ads'), aa = nm('ads_addend');
+  if (am || aa) {
+    // seconds are compared with percent as if the base ADS time were 0.25 s
+    const val = (am ? am.rel + am.add / 0.25 : 0) + (aa ? aa.add / 0.25 : 0);
+    o.adsT = {val, txt: [am && am.txt, aa && aa.txt + ' s'].filter(Boolean).join(' ')};
+  }
+  put('dmg', nm('damage')); put('pen', nm('armor_ignore')); put('rpmM', nm('rpm'));
+  { const r = nm('effective_range'); if (r) o.rng = {val: r.val == null ? null : r.rel + r.add / 100, txt: r.txt + (r.add && !r.rel ? ' m' : '')}; } put('hs', nm('head_shot')); put('spd', nm('ammo_speed'));
+  if (a.zoom && a.zoom.length) o.zoom = {val: Math.max(...a.zoom), txt: a.zoom.map(z => fx(z, 2) + '×').join(' / ')};
+  return o;
+}
+function attrCell(k) {
+  return a => {
+    const c = a.attr[k]; if (!c) return '<span class="dim">—</span>';
+    const cls = attrCls(k, c.val);
+    return `<span class="${cls}">${esc(c.txt)}</span>`;
+  };
+}
+const attrCls = (k, v) => k === 'zoom' || v == null || v === 0 ? '' : ((v > 0) !== LOWER.has(k) ? 'g' : 'b');
+const ATTR_TITLE = Object.fromEntries(ATTR_DEFS);
+const HIDE_ATTR = new Set();
+// Per slot type: columns for the attributes most attachments of that type have, rarer ones go to Bonus.
+const attColCache = {};
+function attColsFor(ty) {
+  if (attColCache[ty]) return attColCache[ty];
+  const L = ATTS.filter(a => a.type === ty);
+  const cov = ATTR_DEFS.filter(([k]) => !HIDE_ATTR.has(k)).map(([k, title]) => ({k, title, n: L.filter(a => a.attr[k]).length})).filter(x => x.n).sort((a, b) => b.n - a.n);
+  let main = cov.filter(x => x.n >= L.length * 0.25).slice(0, 5);
+  if (main.length < 2) main = cov.slice(0, 2);
+  const keys = new Set(main.map(x => x.k));
+  const bonus = a => [
+    ...Object.entries(a.attr).filter(([k]) => !keys.has(k) && !HIDE_ATTR.has(k)).map(([k, c]) => ({label: ATTR_TITLE[k], txt: c.txt, cls: attrCls(k, c.val)})),
+    ...a.other,
+  ];
+  return attColCache[ty] = [
+    {k: 'name', t: 'Attachment', r: a => nameCell(a, a.name)},
+    ...main.map(({k, title}) => ({k, t: title, n: 1, s: a => a.attr[k] ? a.attr[k].val : null, r: attrCell(k)})),
+    {k: 'bonus', t: 'Bonus', noOpt: 1, s: a => bonus(a).length, r: a => `<span class="eff">${bonus(a).map(e => `${esc(e.label)} <span class="${e.cls}">${esc(e.txt)}</span>`).join(' · ') || '<span class="dim">—</span>'}</span>`},
+    {k: 'weight', t: 'Kg', n: 1, r: a => fx(a.weight)},
+    {k: 'nG', t: 'Fits', n: 1, r: a => a.nG + ' guns'},
+  ];
+}
+// extended-mag level -> typical (median) magazine gain over the guns that take it
+function extMagTxt(a, l) {
+  const p = a.guns.map(id => GUN_BY_ID[id]).filter(g => g && g.mag && g.xmag && g.xmag[l - 1]).map(g => Math.round((g.xmag[l - 1] / g.mag - 1) * 100));
+  if (!p.length) return 'level ' + l;
+  p.sort((x, y) => x - y);
+  return `level ${l} · +${p[p.length >> 1]}% mag (typical)`;
+}
+for (const a of ATTS) { a.attr = attrMap(a); a.eff = effects(a); for (const e of a.eff) if (e.lvl) e.txt = extMagTxt(a, e.lvl); a.hay += ' ' + a.eff.map(e => e.label).join(' ').toLowerCase(); a.nG = a.guns.length; a.other = a.eff.filter(e => OTHER_LABELS.has(e.label)); }
+
+// ---- table definitions
+const COLS = {
+  guns: [
+    {k: 'name', t: 'Gun', r: g => nameCell(g, g.name)},
+    {k: 'type', t: 'Type', r: g => `<span class="tag">${esc(GTYPE[g.type] || g.type)}</span>`},
+    {k: 'ammoName', t: 'Ammo', r: g => `<span class="dim">${esc(g.ammoName)}</span>`},
+    {k: 'damage', t: 'Dmg', n: 1, s: dmgOf, r: g => g.damage == null ? '—' : withDelta(g, dmgOf, fx(dmgOf(g)), 2, 1, '', g.pellets > 1 ? `<span class="sub">${g.pellets} × ${fx(dmgOf(g) / g.pellets, 1)}</span>` : '')},
+    {k: 'armorIgnore', t: 'Pen', n: 1, s: effPen, r: g => withDelta(g, effPen, fx(effPen(g) * 100, 0) + '%', 0, 100, '%')},
+    {k: 'rpm', t: 'RPM', n: 1, r: g => fx(g.rpm)},
+    {k: 'dps', t: 'DPS', n: 1, s: dpsOf, r: g => withDelta(g, dpsOf, fx(dpsOf(g), 0), 0, 1, '')},
+    {k: 'adps', t: 'DPS vs armor', n: 1, s: armorDps, r: g => { const v = armorDps(g); return v == null ? '—' : withDelta(g, armorDps, fx(v, 0), 0, 1, ''); }},
+    {k: 'mag', t: 'Mag', n: 1, r: g => fx(g.mag)},
+    {k: 'reloadTac', t: 'Reload', n: 1, r: g => g.reloadTac == null ? '—' : fx(g.reloadTac) + 's'},
+    {k: 'weight', t: 'Kg', n: 1, r: g => fx(g.weight)},
+  ],
+  get atts() { return attColsFor(st.type.atts); },
+  ammo: [
+    {k: 'name', t: 'Ammo', r: a => nameCell(a, a.name)},
+    {k: 'n', t: 'Used by', n: 1, r: a => a.n + ' guns'},
+    {k: 'recipe', t: 'Craft', s: a => a.recipe ? 1 : 0, r: a => a.recipe ? `${a.recipe.count || 1}× from ${a.recipe.mats.map(m => m.n + ' ' + esc(prettyId(m.id))).join(', ')}` : '<span class="dim">no gun-pack recipe</span>'},
+  ],
+};
+const SOURCES = {guns: GUNS, atts: ATTS, ammo: AMMO};
+const TYPEMAP = {guns: GTYPE, atts: ATYPE, ammo: null};
+
+const st = {tab: 'guns', q: '', pack: {guns: null, atts: null, ammo: null}, type: {guns: null, atts: null, ammo: null},
+  sort: {guns: ['adps', 'desc'], atts: ['nG', 'desc'], ammo: ['n', 'desc']}, sel: {guns: null, atts: null, ammo: null}};
+try { const t = localStorage.getItem('armory_tab'); if (SOURCES[t]) st.tab = t; } catch (e) {}
+const h = (location.hash || '').slice(1); if (SOURCES[h]) st.tab = h;
+
+const $ = id => document.getElementById(id);
+$('tally').innerHTML = `<div><b>${GUNS.length}</b>guns</div><div><b>${ATTS.length}</b>attachments</div><div><b>${AMMO.length}</b>calibers</div><div><b>${new Set(GUNS.map(g => g.pack)).size}</b>gun packs</div>`;
+
+// Attachments tab: only attachments that fit the chosen gun (the Gunsmith gun until another is picked)
+const atGun = () => st.atGun === undefined ? SIM.gun : st.atGun;
+const tabSrc = () => st.tab === 'atts' && atGun() ? ATTS.filter(a => a.guns.includes(atGun())) : SOURCES[st.tab];
+function rows() {
+  const src = tabSrc(), q = st.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const pk = st.tab === 'ammo' ? st.pack[st.tab] : null, ty = st.type[st.tab];
+  const craftOnly = !SHOW_UNCRAFT;
+  let r = src.filter(x => (!pk || x.pack === pk) && (!ty || x.type === ty) && (!craftOnly || x.recipe) && q.every(t => x.hay.includes(t)));
+  const [k, dir] = st.sort[st.tab];
+  const col = COLS[st.tab].find(c => c.k === k);
+  const val = x => col && col.s ? col.s(x) : x[k];
+  r.sort((a, b) => {
+    let va = val(a), vb = val(b);
+    if (va == null && vb == null) return 0; if (va == null) return 1; if (vb == null) return -1;
+    const c = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
+    return dir === 'asc' ? c : -c;
+  });
+  return r;
+}
+
+function ensureSlot() {
+  if (st.tab !== 'atts') return;
+  const tc = {}; for (const a of ATTS) tc[a.type] = (tc[a.type] || 0) + 1;
+  if (!tc[st.type.atts]) st.type.atts = Object.keys(tc).sort((a, b) => tc[b] - tc[a])[0];
+  if (!COLS.atts.some(c => c.k === st.sort.atts[0])) st.sort.atts = ['nG', 'desc'];
+}
+function chips() {
+  ensureSlot();
+  const src = tabSrc();
+  $('f-gun').hidden = st.tab !== 'atts'; $('f-pack').hidden = st.tab !== 'ammo';
+  if (st.tab === 'atts') {
+    const g = GUN_BY_ID[atGun()];
+    $('gunBtn').innerHTML = g ? `${ico(g.id, 'sm')}<span class="nm">${esc(g.name)}</span><span class="sub">${esc(PACK[g.pack] || g.pack)}</span><span class="car">▾</span>` : `<span class="ico sm none"></span><span class="nm">Any gun</span><span class="car">▾</span>`;
+  }
+  const count = f => src.reduce((m, x) => (m[x[f]] = (m[x[f]] || 0) + 1, m), {});
+  const pc = count('pack');
+  $('f-pack').innerHTML = '<span class="lbl">Pack</span>' + ['', ...Object.keys(pc).sort()].map(p =>
+    `<button class="chip" data-f="pack" data-v="${p}" aria-pressed="${(st.pack[st.tab] || '') === p}">${p ? esc(PACK[p] || p) : 'All'}${p ? `<i>${pc[p]}</i>` : ''}</button>`).join('');
+  const tm = TYPEMAP[st.tab];
+  if (!tm) { $('f-type').innerHTML = ''; return; }
+  const tc = count('type'), byCount = Object.keys(tc).sort((a, b) => tc[b] - tc[a]);
+  const order = st.tab === 'guns' ? [...GUN_ORDER.filter(x => tc[x]), ...byCount.filter(x => !GUN_ORDER.includes(x))] : byCount;
+  const noAll = true;   // always one type selected, most common first (no All button)
+  if (noAll && !tc[st.type[st.tab]]) st.type[st.tab] = byCount[0];   // default: the most common type
+  $('f-type').innerHTML = `<span class="lbl">${st.tab === 'guns' ? 'Type' : 'Slot'}</span>` + [...(noAll ? [] : ['']), ...order].map(t =>
+    `<button class="chip" data-f="type" data-v="${t}" aria-pressed="${(st.type[st.tab] || '') === t}">${t ? esc(tm[t] || t) : 'All'}${t ? `<i>${tc[t]}</i>` : ''}</button>`).join('');
+}
+
+function table() {
+  const cols = COLS[st.tab], [sk, sd] = st.sort[st.tab];
+  $('tbl').tHead.innerHTML = '<tr>' + cols.map(c => `<th data-k="${c.k}" class="${c.n ? 'num' : ''}" ${c.k === sk ? `data-dir="${sd}"` : ''}>${c.t}</th>`).join('') + '</tr>';
+  const r = rows();
+  $('count').textContent = `${r.length} of ${SOURCES[st.tab].length}`;
+  const sel = st.sel[st.tab];
+  $('tbl').tBodies[0].innerHTML = r.length ? r.map(x => `<tr data-id="${esc(x.id)}" class="${x.id === sel ? 'sel' : ''}">` + cols.map(c => `<td class="${c.n ? 'num' : ''}">${c.r(x)}</td>`).join('') + '</tr>').join('')
+    : `<tr><td colspan="${cols.length}" class="empty">Nothing matches “${esc(st.q)}”. Clear the search or pick another pack.</td></tr>`;
+  if (!sel || !r.some(x => x.id === sel)) { if (r[0]) { st.sel[st.tab] = r[0].id; $('tbl').tBodies[0].rows[0].classList.add('sel'); } }
+  sheet();
+}
+
+const spec = (label, val, extra) => `<div class="spec"><span>${label}</span><b>${val}</b>${extra ? ` <em>${extra}</em>` : ''}</div>`;
+const matsHtml = (r, extra) => r ? `<div class="dim" style="font-size:12px;margin-bottom:6px">${esc(r.table)}${extra || ''}</div><ul class="mats">${r.mats.map(m => `<li><span class="ing">${ingIco(m.id)}<span>${esc((D.ingNames || {})[m.id] || prettyId(m.id))} <span class="sub">${esc(m.id)}</span></span></span><b>× ${m.n}</b></li>`).join('')}</ul>`
+  : '<div class="dim">No crafting recipe in the gun packs. Loot, NPC drop or admin spawn only.</div>';
+const lootHtml = L => {
+  if (!L.buildings.length && !L.mobs.length) return '<div class="dim">Not found in building loot or mob drops in the guide data.</div>';
+  let s = '';
+  if (L.buildings.length) s += `<div style="font-size:13px">Best roll: <b style="color:var(--brass)">${fx(L.best, 1)}%</b> at ${esc(L.bestAt)}</div>
+    <details><summary>In <b>${L.buildings.length}</b> building${L.buildings.length > 1 ? 's' : ''}</summary><div class="alist" style="margin-top:6px">${L.buildings.map(b => `<span class="tag">${esc(b)}</span>`).join('')}</div></details>`;
+  if (L.mobs.length) s += `<div style="font-size:13px;margin-top:6px">Dropped by: ${L.mobs.map(esc).join(', ')}</div>`;
+  return s;
+};
+
+function sheet() {
+  const id = st.sel[st.tab], el = $('sheet');
+  if (!id) { el.innerHTML = '<div class="empty">Pick a row to see its full spec sheet.</div>'; return; }
+  if (st.tab === 'guns') el.innerHTML = gunSheet(GUN_BY_ID[id]);
+  else if (st.tab === 'atts') el.innerHTML = attSheet(ATT_BY_ID[id]);
+  else el.innerHTML = ammoSheet(AMMO_BY_ID[id]);
+}
+
+// ---------- in-game style stat panel (same rows, scales and colors as TaCZ's gun refit "property diagrams")
+// row: [label, base, cur, scale, better ('high'|'low'), digits, suffix, prefix]; bar = value / scale, white to the lower of base and cur,
+// green where it got better, red where it got worse.
+function gameStats(g, ids, en) {
+  const base = buildStats(g, []), b = (ids && ids.length) || Object.values(en || {}).some(v => v) ? buildStats(g, ids || [], en) : base;
+  const sp = (o, k) => (o.spread[k] == null ? 0 : o.spread[k]);
+  const eff = o => Math.min(o.fullRange, 1024);
+  const rows = [
+    ['Ammo', base.mag, b.mag, 100, 'high', 0, ''],
+    ['SPT', g.sprint, g.sprint, 0.5, 'low', 2, 's'],
+    ['ADS', base.ads, b.ads, 0.5, 'low', 2, 's'],
+    ['Ammo Speed', base.speed / 2, b.speed / 2, 600, 'high', 0, 'm/s'],
+    ['AP Ratio', base.pen * 100, b.pen * 100, 100, 'high', 1, '%'],
+    ['Damage', base.damage, b.damage, 50, 'high', 2, ''],
+    ['Eff.Range', eff(base), eff(b), 100, 'high', 1, 'm'],
+    ['Headshot', base.headshot, b.headshot, 5, 'high', 1, '', 'x'],
+    ['Hipfire', sp(base, 'stand'), sp(b, 'stand'), 10, 'low', 2, ''],
+    ['Sneak Spread', sp(base, 'sneak'), sp(b, 'sneak'), 5, 'low', 2, ''],
+    ['Crawl Spread', sp(base, 'lie'), sp(b, 'lie'), 5, 'low', 2, ''],
+    ['Accuracy', (1 - sp(base, 'aim')) * 100, (1 - sp(b, 'aim')) * 100, 100, 'high', 1, '%'],
+    ['Knockback', base.knockback, b.knockback, 1, 'high', 2, ''],
+    ['Pierce', base.pierce, b.pierce, 5, 'high', 0, ''],
+    ['Ver.Recoil', base.recoilV, b.recoilV, 5, 'low', 2, ''],
+    ['Hor.Recoil', base.recoilH, b.recoilH, 5, 'low', 2, ''],
+    ['RPM', base.rpm, b.rpm, 1200, 'high', 0, 'rpm'],
+    ['Weight', base.weight, b.weight, 20, 'low', 2, 'kg'],
+  ];
+  const mode = ((g.modes && g.modes.length) ? g.modes : ['semi']).map(m => m.toUpperCase()).join(' / ');
+  const html = rows.map(([l, a, c, sc, better, d, u, pre]) => {
+    if (a == null || c == null || !isFinite(a) && !isFinite(c)) return isFinite(c) || a == null ? '' : `<div class="gs-r"><span class="gs-l">${l}</span><span class="gs-b"><i style="width:100%"></i></span><span class="gs-v">∞</span></div>`;
+    const pa = Math.min(Math.max(a / sc, 0), 1), pc = Math.min(Math.max(c / sc, 0), 1), lo = Math.min(pa, pc), hi = Math.max(pa, pc);
+    const diff = +(c - a).toFixed(d), up = diff > 0, good = (better === 'high') === up;
+    const cls = diff === 0 ? '' : good ? 'g' : 'r';
+    const txt = (pre || '') + c.toFixed(d) + u + (diff === 0 ? '' : ` <em class="${cls}">(${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(d)}${u === '%' ? '%' : ''})</em>`);
+    return `<div class="gs-r"><span class="gs-l">${l}</span><span class="gs-b"><i style="width:${(lo * 100).toFixed(2)}%"></i>${hi > lo ? `<i class="${cls || 'g'}" style="width:${((hi - lo) * 100).toFixed(2)}%"></i>` : ''}</span><span class="gs-v">${txt}</span></div>`;
+  }).join('');
+  return `<div class="gs"><div class="gs-h"><kbd>S</kbd><span>Fire Mode: ${esc(mode)}</span></div>${html}<div class="gs-n">Bars use TaCZ's own scales. Ammo Speed is the pack value; this pack doubles it in flight.</div></div>`;
+}
+
+function gunSheet(g) {
+  if (!g) return '';
+  const mv = g.move || {};
+  const mvTxt = ['base', 'aim', 'reload'].filter(k => mv[k]).map(k => `${k} ${mv[k] > 0 ? '+' : ''}${fx(mv[k] * 100, 0)}%`).join(' · ') || 'no change';
+  const fall = (g.falloff || []).map((f, i, a) => {
+    const from = i ? a[i - 1][0] : 0;
+    return `<div><span class="dim">${from}${f[0] === 'infinite' ? ' m +' : '–' + f[0] + ' m'}</span><b>${fx(f[1] * (ammoOn(g) ? amStats(g).ratio : 1))}</b></div>`;
+  }).join('');
+  const byType = {};
+  for (const aid of g.allowed) { const a = ATT_BY_ID[aid]; const t = a ? a.type : 'other'; (byType[t] = byType[t] || []).push(aid); }
+  const order = ['scope', 'muzzle', 'grip', 'stock', 'extended_mag', 'laser'];
+  const atts = Object.keys(byType).sort((a, b) => order.indexOf(a) - order.indexOf(b)).map(t =>
+    `<details ${Object.keys(byType).length <= 2 ? 'open' : ''}><summary>${esc(ATYPE[t] || t)} · <b>${byType[t].length}</b></summary><div class="alist" style="margin-top:6px">${byType[t].map(a => `<button class="alink" data-go="atts" data-id="${esc(a)}">${esc(nameOf(a))}</button>`).join('')}</div></details>`).join('');
+  const preset = g.recipe && g.recipe.preset && Object.keys(g.recipe.preset).length ? ' · comes with ' + Object.values(g.recipe.preset).map(nameOf).map(esc).join(', ') : '';
+  return `<div class="sheet-h">${ico(g.id, 'big')}<h2>${esc(g.name)}</h2><div class="ids"><span class="tag">${esc(PACK[g.pack] || g.pack)}</span><span class="tag">${esc(GTYPE[g.type] || g.type)}</span>${esc(g.id)}</div>${g.desc ? `<p>${esc(g.desc)}</p>` : ''}</div>
+  ${g.damage != null && g.rpm ? `<div class="sec"><button class="chip" type="button" data-gs="gun" data-id="${esc(g.id)}">Add to Gunsmith</button></div>` : ''}
+  <div class="sec"><h3>Damage</h3><div class="specs">
+    ${spec('Damage / shot', g.damage == null ? '—' : fx(dmgOf(g)), (g.pellets > 1 ? g.pellets + ' × ' + fx(dmgOf(g) / g.pellets, 2) + ' ' : '') + dlt(g, dmgOf, 2, 1, ''))}
+    ${spec('DPS (body)', fx(dpsOf(g), 1), dlt(g, dpsOf, 1, 1, ''))}
+    ${spec('DPS vs armor', fx(armorDps(g), 1), ARMOR_PTS + ' armor ' + dlt(g, armorDps, 1, 1, ''))}
+    ${spec('Headshot', '×' + fx(ammoOn(g) ? amStats(g).headshot : g.headshot))}
+    ${spec('Armor pen', fx(effPen(g) * 100, 0) + '%', dlt(g, effPen, 0, 100, '%'))}
+    ${spec('Pierce', fx(ammoOn(g) ? amStats(g).pierce : g.pierce))}
+    ${spec('Bullet speed', g.speed == null ? '—' : fx(g.speed * 2, 0), g.speed ? 'base ' + fx(g.speed) : '')}
+    ${g.explode ? spec('Explosion', fx(g.explDamage) + ' dmg', 'r ' + fx(g.explRadius) + ' m') : ammoOn(g) && amStats(g).explode ? spec('Explosion', 'yes', 'from ammo') : ''}
+    ${g.ignite ? spec('Incendiary', 'yes') : ammoOn(g) && amStats(g).ignite ? spec('Incendiary', 'yes', 'from ammo') : ''}
+  </div>${fall ? `<div style="margin-top:8px"><div class="dim" style="font:500 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Damage by range</div><div class="ladder">${fall}</div></div>` : ''}</div>
+  <div class="sec"><h3>Handling</h3><div class="specs">
+    ${spec('Ammo', esc(g.ammoName), '')}
+    ${spec('Magazine', fx(g.mag), g.xmag ? 'ext ' + g.xmag.join(' / ') : '')}
+    ${spec('Fire rate', fx(g.rpm) + ' rpm')}
+    ${spec('Modes', esc((g.modes || []).join(', ') || '—'), g.burst ? g.burst + '-rd burst' : '')}
+    ${spec('Action', esc((g.bolt || '').replace('_', ' ') || '—'))}
+    ${spec('Reload', g.reloadTac == null ? esc(g.reloadType || '—') : fx(g.reloadTac) + 's', g.reloadEmpty ? 'empty ' + fx(g.reloadEmpty) + 's' : '')}
+    ${spec('ADS time', g.aim == null ? '—' : fx(g.aim) + 's')}
+    ${spec('Draw', g.draw == null ? '—' : fx(g.draw) + 's')}
+    ${spec('Weight', fx(g.weight) + ' kg')}
+    ${spec('Hip spread', fx(g.hip))}
+    ${spec('ADS spread', fx(g.aimInacc))}
+    ${spec('Recoil V / H', fx(g.recoilV) + ' / ' + fx(g.recoilH))}
+  </div><div class="dim" style="font-size:12px;margin-top:6px">Move speed: ${esc(mvTxt)}${g.heat ? ' · overheats' : ''}</div></div>
+  <div class="sec"><h3>Where to get it</h3>${lootHtml(g.loot)}</div>
+  <div class="sec"><h3>Crafting</h3>${matsHtml(g.recipe, preset)}</div>
+  <div class="sec"><h3>Attachments · ${g.allowed.length}</h3>${atts || '<div class="dim">Takes no attachments.</div>'}</div>`;
+}
+
+// guns the attachment fits, the one chosen above the table first
+function gsAddSec(a) {
+  const pref = atGun() || SIM.gun;
+  const ok = a.guns.map(id => GUN_BY_ID[id]).filter(g => g && g.damage != null && g.rpm).sort((x, y) => (y.id === pref) - (x.id === pref) || x.name.localeCompare(y.name));
+  if (!ok.length) return '';
+  return `<div class="sec"><h3>Gunsmith</h3><div class="chipset"><select id="gsGun" class="simsel" aria-label="Gun">${ok.map(g => `<option value="${esc(g.id)}">${esc(g.name)}${g.id === SIM.gun ? ' · in Gunsmith' : ''}</option>`).join('')}</select><button class="chip" type="button" data-gs="att" data-id="${esc(a.id)}">Add to Gunsmith</button></div></div>`;
+}
+function attSheet(a) {
+  if (!a) return '';
+  const byPack = {};
+  for (const gid of a.guns) { const g = GUN_BY_ID[gid]; (byPack[g ? g.pack : '?'] = byPack[g ? g.pack : '?'] || []).push(gid); }
+  return `<div class="sheet-h">${ico(a.id, 'big')}<h2>${esc(a.name)}</h2><div class="ids"><span class="tag">${esc(PACK[a.pack] || a.pack)}</span><span class="tag">${esc(ATYPE[a.type] || a.type)}</span>${esc(a.id)}</div>${a.desc ? `<p>${esc(a.desc)}</p>` : ''}</div>
+  ${gsAddSec(a)}
+  <div class="sec"><h3>Effects</h3>${a.eff.length ? `<div class="specs">${a.eff.map(e => spec(esc(e.label), `<span class="${e.cls}">${esc(e.txt)}</span>`)).join('')}</div>` : '<div class="dim">No stat changes. Sight or cosmetic only.</div>'}</div>
+  <div class="sec"><h3>Crafting</h3>${matsHtml(a.recipe)}</div>
+  <div class="sec"><h3>Fits ${a.guns.length} guns</h3>${Object.keys(byPack).sort().map(p => `<details ${Object.keys(byPack).length === 1 ? 'open' : ''}><summary>${esc(PACK[p] || p)} · <b>${byPack[p].length}</b></summary><div class="alist" style="margin-top:6px">${byPack[p].map(g => `<button class="alink" data-go="guns" data-id="${esc(g)}">${esc(nameOf(g))}</button>`).join('')}</div></details>`).join('') || '<div class="dim">No gun lists this attachment.</div>'}</div>`;
+}
+
+function ammoSheet(a) {
+  if (!a) return '';
+  return `<div class="sheet-h">${ico(a.id, 'big')}<h2>${esc(a.name)}</h2><div class="ids">${esc(a.id)}${a.stack ? ` · stack ${a.stack}` : ''}</div></div>
+  <div class="sec"><h3>Crafting</h3>${a.recipe ? matsHtml(a.recipe, ' · makes ' + (a.recipe.count || 1)) : '<div class="dim">No gun-pack recipe. The pack crafts most ammo through its own KubeJS recipes (ammo boxes, shells, bullets), so check JEI in game.</div>'}</div>
+  <div class="sec"><h3>Used by ${a.guns.length} guns</h3><div class="alist">${a.guns.map(g => `<button class="alink" data-go="guns" data-id="${esc(g)}">${esc(nameOf(g))}</button>`).join('')}</div></div>`;
+}
+
+function setTab(t) {
+  if (t === 'sim') {
+    for (const b of $('tabs').children) b.setAttribute('aria-selected', b.dataset.tab === 'sim');
+    $('simWrap').hidden = false; $('filtersWrap').hidden = true; $('mainWrap').hidden = true; $('listNotes').hidden = true;
+    initSim(); return;
+  }
+  $('simWrap').hidden = true; $('filtersWrap').hidden = false; $('mainWrap').hidden = false; $('listNotes').hidden = false;
+  for (const k of KINDS) { cancelAnimationFrame(SIM.du[k].raf); SIM.du[k].raf = 0; SIM.du[k].duel = null; }
+  st.tab = t;
+  for (const b of $('tabs').children) b.setAttribute('aria-selected', b.dataset.tab === t);
+  $('armorWrap').hidden = t !== 'guns';
+  try { localStorage.setItem('armory_tab', t); } catch (e) {}
+  chips(); table();
+}
+
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); });
+$('q').addEventListener('input', e => { st.q = e.target.value; table(); });
+$('gunBtn').addEventListener('click', e => pickAtGun(e.currentTarget));
+$('armorIn').value = ARMOR_PTS;
+$('armorIn').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if (!(v >= 0)) return;
+  ARMOR_PTS = Math.min(100, v);
+  try { localStorage.setItem('armory_armor_pts2', String(ARMOR_PTS)); } catch (err) {}
+  table();
+});
+$('craftBtn').setAttribute('aria-pressed', SHOW_UNCRAFT);
+$('craftBtn').addEventListener('click', () => {
+  SHOW_UNCRAFT = !SHOW_UNCRAFT;
+  $('craftBtn').setAttribute('aria-pressed', SHOW_UNCRAFT);
+  try { localStorage.setItem('armory_uncraft4', SHOW_UNCRAFT ? '1' : '0'); } catch (err) {}
+  table();
+});
+{
+  const mods = Object.values(ATT_BY_ID).filter(x => /ammo_mod/.test(x.id)).sort((x, y) => y.guns.length - x.guns.length);
+  if (SPECIAL && !mods.some(x => x.id === SPECIAL)) SPECIAL = '';
+  $('ammoSel').innerHTML = '<option value="">None</option>' + mods.map(x => `<option value="${esc(x.id)}">${esc(x.name.replace(/ Ammo$/, ''))} · ${x.guns.length} guns</option>`).join('');
+  $('ammoSel').value = SPECIAL;
+  $('ammoSel').addEventListener('change', () => {
+    SPECIAL = $('ammoSel').value; amCache.clear();
+    try { localStorage.setItem('armory_ammomod', SPECIAL); } catch (err) {}
+    table();
+  });
+}
+document.querySelector('.filters').addEventListener('click', e => {
+  const c = e.target.closest('.chip[data-f]'); if (!c) return;
+  st[c.dataset.f][st.tab] = c.dataset.v || null; chips(); table();
+});
+$('tbl').addEventListener('click', e => {
+  const th = e.target.closest('th');
+  if (th) {
+    const k = th.dataset.k, [ck, cd] = st.sort[st.tab];
+    const isText = ['name', 'type', 'ammoName'].includes(k) || (st.tab === 'atts' && LOWER.has(k));
+    st.sort[st.tab] = [k, ck === k ? (cd === 'asc' ? 'desc' : 'asc') : (isText ? 'asc' : 'desc')];
+    table(); return;
+  }
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) {
+    st.sel[st.tab] = tr.dataset.id;
+    for (const r of $('tbl').tBodies[0].rows) r.classList.toggle('sel', r === tr);
+    sheet();
+    if (window.matchMedia('(max-width:980px)').matches) $('sheet').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+});
+$('sheet').addEventListener('click', e => {
+  const gs = e.target.closest('[data-gs]');
+  if (gs) return gsAdd(gs.dataset.gs === 'att' ? $('gsGun').value : gs.dataset.id, gs.dataset.gs === 'att' ? gs.dataset.id : '');
+  const b = e.target.closest('[data-go]'); if (!b) return;
+  const t = b.dataset.go, id = b.dataset.id;
+  st.q = ''; $('q').value = ''; st.pack[t] = null; st.type[t] = null; st.sel[t] = id;
+  setTab(t);
+  const row = [...$('tbl').tBodies[0].rows].find(r => r.dataset.id === id);
+  if (row) row.scrollIntoView({block: 'nearest'});
+});
+
+// ================= Gunsmith (2D simulator) =================
+const SIM = {du: {dummy: {duel: null, raf: 0}, target: {duel: null, raf: 0}}, rec: false, reaim: true, gun: 'tacz:ak47', att: {}, ench: {}, stance: 'aim', range: 10, zone: 'body', hp: 20, armor: 0, preset: '', speed: 1, duel: null, raf: 0, timer: 0, ready: false};
+const TARGETS = D.targets || [];
+const STANCES = [['aim', 'Aiming'], ['stand', 'Standing'], ['move', 'Moving'], ['sneak', 'Sneaking'], ['lie', 'Prone']];
+const SLOT_ORDER = ['scope', 'muzzle', 'grip', 'stock', 'extended_mag', 'laser'];
+// target silhouette in metres, standing zombie-sized: body 0.6 wide, head 0.5 wide on top
+// player-sized target, 1.8 m tall, in metres from the ground: legs, torso with hanging arms, head
+const PLAYER = [
+  {part: 'body', x0: -0.225, x1: 0, y0: 0, y1: 0.675}, {part: 'body', x0: 0, x1: 0.225, y0: 0, y1: 0.675},
+  {part: 'body', x0: -0.225, x1: 0.225, y0: 0.675, y1: 1.35},
+  {part: 'body', x0: -0.45, x1: -0.225, y0: 0.675, y1: 1.35}, {part: 'body', x0: 0.225, x1: 0.45, y0: 0.675, y1: 1.35},
+  {part: 'head', x0: -0.225, x1: 0.225, y0: 1.35, y1: 1.8}];
+const AIM_Y = {body: 1.0, head: 1.575};
+const aimYOf = zone => AIM_Y[zone === 'head' ? 'head' : 'body'];
+function partAt(x, y) {
+  for (const r of PLAYER) if (x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1) return r.part;
+  return 'miss';
+}
+// draw the player (plain outline, theme colours); mx / my map metres to canvas pixels
+function drawPlayer(c, mx, my, line) {
+  c.lineWidth = 1; c.strokeStyle = line; c.fillStyle = cssv('--sunk');
+  for (const r of PLAYER) { c.fillRect(mx(r.x0), my(r.y1), mx(r.x1) - mx(r.x0), my(r.y0) - my(r.y1)); c.strokeRect(mx(r.x0), my(r.y1), mx(r.x1) - mx(r.x0), my(r.y0) - my(r.y1)); }
+}
+
+// --- attachment modifier math: (base + sum addend) * (1 + sum percent) * product multiplier, formulas first
+function exprEval(s, x) {
+  s = s.trim();
+  let m = /^x\s*([*+\-/])\s*(-?[\d.]+)$/.exec(s);
+  if (m) { const n = +m[2]; return m[1] === '*' ? x * n : m[1] === '+' ? x + n : m[1] === '-' ? x - n : x / n; }
+  if (s === 'x') return x;
+  if (/^-?[\d.]+$/.test(s)) return +s;
+  return x;
+}
+function evalFn(src, x) {
+  src = src.trim();
+  let m = /^y\s*=\s*(.+)$/.exec(src);
+  if (m && !/^if/.test(src)) return exprEval(m[1], x);
+  m = /^if\s*\(\s*x\s*(>=|<=|>|<|==)\s*(-?[\d.]+)\s*\)\s*then\s*y\s*=\s*(.+?)\s*else\s*y\s*=\s*(.+?)\s*end$/.exec(src);
+  if (m) {
+    const c = +m[2], ok = {'>': x > c, '<': x < c, '>=': x >= c, '<=': x <= c, '==': x === c}[m[1]];
+    return exprEval(ok ? m[3] : m[4], x);
+  }
+  return x;
+}
+function applyMods(base, mods) {
+  let v = base, add = 0, pct = 0, mul = 1;
+  for (const m of mods) if (m && typeof m === 'object' && m.function) v = evalFn(m.function, v);
+  for (const m of mods) {
+    if (typeof m === 'number') add += m;
+    else if (m && typeof m === 'object' && !m.function) { add += m.addend || 0; pct += m.percent || 0; if (m.multiplier != null) mul *= m.multiplier; }
+  }
+  return (v + add) * (1 + pct) * mul;
+}
+
+// TaCZ Enchantments Overhaul, values from the pack's tacz_enchantments_overhaul.json5 (max level, effect per level)
+const ENCH = [
+  ['firepower', 'Firepower', 5, '+10% damage per level'],
+  ['bullseye', 'Bullseye', 2, '+50% headshot damage per level'],
+  ['deep_impact', 'Deep Impact', 3, '+5% armor penetration per level'],
+  ['punch_through', 'Punch Through', 2, '+1 extra entity hit per level'],
+  ['precision', 'Precision', 3, '−5% spread per level'],
+  ['capacity', 'Capacity', 4, '+25% magazine per level'],
+  ['bullet_retention', 'Bullet Retention', 3, '5% chance per level a shot uses no ammo'],
+];
+// guns the pack bars from Capacity
+const ENCH_NO_CAP = new Set(['tacz:db_short', 'tacz:db_long', 'tacz:lonetrail', 'tacz:rpg7', 'rebel:mta', 'tacz:m320', 'suffuse:aiyasinrpg', 'suffuse:m79', 'suffuse:m203', 'suffuse:pf98a', 'suffuse:qlu911', 'rebel:t70th', 'rebel:bq01', 'bf1:lunge_mine', 'bf1:f_faust', 'bf1:tg1918', 'bf1:martini', 'tacz:springfield1873']);
+function buildStats(g, ids, en) {
+  en = en || {};
+  const E = id => (ATT_BY_ID[id] || {}).effects || {};
+  const C = k => ids.map(i => E(i)[k]).filter(v => v != null);
+  const S = (k, s) => ids.map(i => (E(i)[k] || {})[s]).filter(v => v != null);
+  const damage = applyMods(g.damage || 0, C('damage')) * (1 + 0.1 * (en.firepower || 0));
+  const ratio = g.damage ? damage / g.damage : 1;
+  const falloff = (g.falloff || []).length
+    ? g.falloff.map(([d, dm]) => [d === 'infinite' ? Infinity : applyMods(d, C('effective_range')), dm * ratio])
+    : [[Infinity, damage]];
+  const inAcc = C('inaccuracy').concat(C('inaccuracy_addend'));
+  const mods = {stand: inAcc, move: inAcc, sneak: C('sneak_inaccuracy'), lie: C('lie_inaccuracy'), aim: C('aim_inaccuracy')};
+  const base = g.inacc || {}, spread = {};
+  for (const k of ['stand', 'move', 'sneak', 'lie', 'aim']) {
+    const b0 = base[k] != null ? base[k] : (base.stand != null ? base.stand : g.hip || 0);
+    spread[k] = Math.max(0, applyMods(b0, mods[k]) * (1 - 0.05 * (en.precision || 0)));
+  }
+  const pitchExtra = ids.map(i => (E(i).recoil_modifier || {}).pitch).filter(v => v != null).map(v => ({percent: v}));
+  const yawExtra = ids.map(i => (E(i).recoil_modifier || {}).yaw).filter(v => v != null).map(v => ({percent: v}));
+  const lvl = Math.max(0, ...C('extended_mag_level'));
+  const mag0 = lvl > 0 && g.xmag && g.xmag[lvl - 1] ? g.xmag[lvl - 1] : (g.mag || 1);
+  const mag = Math.max(1, Math.round(mag0 * (1 + 0.25 * (en.capacity || 0))));
+  const first = falloff.find(f => isFinite(f[0]));
+  return {
+    pellets: g.pellets || 1, damage, ratio, falloff,
+    pen: Math.min(1, Math.max(0, applyMods(g.armorIgnore || 0, C('armor_ignore')) + 0.05 * (en.deep_impact || 0))),
+    headshot: applyMods(g.headshot || 1, C('head_shot')) * (1 + 0.5 * (en.bullseye || 0)),
+    rpm: Math.max(1, applyMods(g.rpm || 600, C('rpm'))),
+    speed: (g.speed || 300) * 2 * applyMods(1, C('ammo_speed')),
+    pierce: applyMods(g.pierce || 1, C('pierce')) + (en.punch_through || 0), keep: 0.05 * (en.bullet_retention || 0), knockback: applyMods(g.knockback || 0, C('knockback')),
+    spread, ads: Math.max(0, applyMods(g.aim == null ? 0.25 : g.aim, C('ads').concat(C('ads_addend')))),
+    rec: {p: (g.recKeys || {}).pitch || [], y: (g.recKeys || {}).yaw || [], crawl: g.crawlRec == null ? 0.5 : g.crawlRec,
+      pm: S('recoil', 'pitch').concat(pitchExtra), ym: S('recoil', 'yaw').concat(yawExtra),
+      zoom: Math.max(1, ...ids.map(i => ((ATT_BY_ID[i] || {}).type === 'scope' && (ATT_BY_ID[i].zoom || [])[0]) || 1))},
+    recoilV: (g.recoilV || 0) * applyMods(1, S('recoil', 'pitch').concat(pitchExtra)),
+    recoilH: (g.recoilH || 0) * applyMods(1, S('recoil', 'yaw').concat(yawExtra)),
+    mag, weight: (g.weight || 0) + ids.reduce((s, i) => s + ((ATT_BY_ID[i] || {}).weight || 0), 0),
+    fullRange: first ? first[0] : Infinity,
+    explode: ids.some(i => (E(i).explosion || {}).explode) || g.explode,
+    ignite: ids.some(i => (E(i).ignite || {}).entity) || g.ignite,
+    silenced: ids.some(i => (E(i).silence || {}).use_silence_sound),
+  };
+}
+
+function shotDamageAt(b, r) {
+  for (const [d, dm] of b.falloff) if (r <= d) return dm;
+  return b.falloff[b.falloff.length - 1][1];
+}
+function rng(seed) { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
+
+
+// ---------- recoil (TaCZ CameraSetupEvent / GunRecoil): each shot builds a natural cubic spline through
+// (0,0) and every keyframe at (time + 0.03 s, random value in [lo, hi] * scale). The camera follows the spline
+// as it plays, and a new shot replaces the old spline, so whatever the old one had not yet recovered stays as climb.
+function spline(ts, vs) {
+  const n = ts.length - 1;
+  if (n < 2) return t => vs[0] + (vs[n] - vs[0]) * (t - ts[0]) / ((ts[n] - ts[0]) || 1);
+  const h = [], al = [0], l = [1], mu = [0], z = [0], c = new Array(n + 1).fill(0), bb = [], d = [];
+  for (let i = 0; i < n; i++) h[i] = ts[i + 1] - ts[i];
+  for (let i = 1; i < n; i++) {
+    al[i] = 3 / h[i] * (vs[i + 1] - vs[i]) - 3 / h[i - 1] * (vs[i] - vs[i - 1]);
+    l[i] = 2 * (ts[i + 1] - ts[i - 1]) - h[i - 1] * mu[i - 1]; mu[i] = h[i] / l[i]; z[i] = (al[i] - h[i - 1] * z[i - 1]) / l[i];
+  }
+  for (let j = n - 1; j >= 0; j--) { c[j] = z[j] - mu[j] * c[j + 1]; bb[j] = (vs[j + 1] - vs[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3; d[j] = (c[j + 1] - c[j]) / (3 * h[j]); }
+  return t => { let i = n - 1; for (let k = 0; k < n; k++) if (t <= ts[k + 1]) { i = k; break; } const x = t - ts[i]; return vs[i] + bb[i] * x + c[i] * x * x + d[i] * x * x * x; };
+}
+// camera recoil scale before attachments: shrinks when aiming through a zoomed scope, and when prone
+function recoilScale(b, stance) {
+  let m = stance === 'aim' ? 1 / Math.min(Math.sqrt(b.rec.zoom), 1.5) : 1;
+  if (stance === 'lie') m *= b.rec.crawl;
+  return m;
+}
+// one shot's kick: {p, y} each {f(t), end} (degrees, pitch + = up, yaw + = left); rand omitted = middle of each range
+function recoilCurve(b, stance, rand) {
+  const m = recoilScale(b, stance);
+  const mk = (keys, mods) => {
+    if (!keys.length) return null;
+    const k = applyMods(m, mods), ts = [0], vs = [0];
+    for (const [t, lo, hi] of keys) { const tt = t + 0.03; if (tt <= ts[ts.length - 1] + 1e-6) continue; ts.push(tt); vs.push((lo + (rand ? rand() : 0.5) * (hi - lo)) * k); }
+    return {f: spline(ts, vs), end: ts[ts.length - 1]};
+  };
+  return {p: mk(b.rec.p, b.rec.pm), y: mk(b.rec.y, b.rec.ym)};
+}
+const kickAt = (c, t) => c ? c.f(Math.min(Math.max(t, 0), c.end)) : 0;
+// an average player pulls the mouse down against most of the vertical climb and about half the sideways drift (an assumption, not measured)
+const REC_RES = {p: 0.3, y: 0.5};
+const recRes = () => SIM.rec ? {p: 1, y: 1} : REC_RES;
+// where the crosshair sits (degrees) when each shot of a sustained spray fires, with no mouse compensation
+// res = share of the climb the player fails to pull back (1 = none cancelled)
+function recoilPre(b, stance, n, rand, res) {
+  const gap = 60 / b.rpm, out = [], rp = res ? res.p : 1, ry = res ? res.y : 1; let p = 0, y = 0;
+  for (let k = 0; k < n; k++) { out.push({p, y}); const c = recoilCurve(b, stance, rand); p += kickAt(c.p, gap) * rp; y += kickAt(c.y, gap) * ry; }
+  return out;
+}
+
+// one trigger pull: every pellet lands uniformly inside the spread cone, then is tested against the silhouette
+function shootOnce(b, o, rand, pts, off) {
+  const n = b.pellets, per = shotDamageAt(b, o.range) / n;
+  const R = o.range * Math.tan(b.spread[o.stance] * Math.PI / 180), aimY = aimYOf(o.zone) + (off ? o.range * Math.tan(off.p * Math.PI / 180) : 0), aimX = off ? -o.range * Math.tan(off.y * Math.PI / 180) : 0;
+  let dmg = 0, head = 0, body = 0, miss = 0;
+  for (let i = 0; i < n; i++) {
+    const u = Math.sqrt(rand()) * R, a = rand() * 6.283185307;
+    const x = aimX + u * Math.cos(a), y = aimY + u * Math.sin(a);
+    const part = partAt(x, y);
+    if (part === 'miss') miss++;
+    else { if (part === 'head') head++; else body++; dmg += hitAfterArmor(per * (part === 'head' ? b.headshot : 1), b.pen, o.armor); }
+    if (pts) pts.push({x, y, part});
+  }
+  return {dmg, head, body, miss};
+}
+
+function fight(b, g, o, rand, rec, lim) {
+  let hp = o.hp, ammo = b.mag, shots = 0, reloads = 0;
+  let t = (o.stance === 'aim' ? b.ads : 0) + o.range / Math.max(1, b.speed);
+  const gap = 60 / b.rpm, rl = g.reloadEmptyTotal || g.reloadEmpty || 2.5, ev = rec ? [] : null;
+  const rp = o.recRes ? recoilPre(b, o.stance, b.mag + 1, rand, o.recRes) : null; let ri = 0;
+  // A player whose aim has drifted off the target stops after a few wasted rounds (10% of the magazine, at least 1 and at most 5, so bigger magazines waste 3 to 5),
+  // lets the recoil settle and puts the crosshair back on the target.
+  const missLim = Math.min(5, Math.max(1, Math.round(0.1 * b.mag))), rc = rp ? recoilCurve(b, o.stance, null) : null;
+  const settle = rc ? Math.max(rc.p ? rc.p.end : 0, rc.y ? rc.y.end : 0) : 0, aimY0 = aimYOf(o.zone);
+  let misses = 0, reaims = 0;
+  while (hp > 0 && shots < (lim || (rec ? 400 : 250))) {
+    if (ammo <= 0) { if (ev) ev.push({t, type: 'reload', until: t + rl}); t += rl; ammo = b.mag; reloads++; ri = 0; }
+    const off = rp ? rp[Math.min(ri++, rp.length - 1)] : null;
+    const pts = rec ? [] : null, r = shootOnce(b, o, rand, pts, off);
+    const kept = b.keep > 0 && rand() < b.keep;
+    hp -= r.dmg; if (!kept) ammo--; shots++;
+    if (ev) ev.push({t, type: 'shot', pts, hp: Math.max(0, hp), dmg: r.dmg, kept});
+    if (hp <= 0) break;
+    t += gap;
+    const lost = off && r.head + r.body === 0 && partAt(-o.range * Math.tan(off.y * Math.PI / 180), aimY0 + o.range * Math.tan(off.p * Math.PI / 180)) === 'miss';
+    misses = lost ? misses + 1 : 0;
+    if (o.reaim && misses >= missLim && ammo > 0) {
+      if (ev) ev.push({t, type: 'reaim', until: t + settle});
+      t += settle; ri = 0; misses = 0; reaims++;
+    }
+  }
+  return {t, shots, reloads, reaims, killed: hp <= 0, ev};
+}
+
+function quant(sorted, q) { return sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))] : NaN; }
+function summarize(b, g, o, nFights, nShots) {
+  const rand = rng(12345), T = [], SH = [];
+  let kills = 0, rel = 0;
+  for (let i = 0; i < nFights; i++) {
+    const f = fight(b, g, o, rand, false);
+    if (f.killed) { kills++; T.push(f.t); SH.push(f.shots); rel += f.reloads; }
+  }
+  T.sort((a, c) => a - c); SH.sort((a, c) => a - c);
+  let dmg = 0, hits = 0, heads = 0, pel = 0;
+  for (let i = 0; i < nShots; i++) { const r = shootOnce(b, o, rand, null); dmg += r.dmg; hits += r.head + r.body; heads += r.head; pel += b.pellets; }
+  const avg = dmg / nShots, gap = 60 / b.rpm, rl = g.reloadEmptyTotal || g.reloadEmpty || 2.5;
+  return {
+    killRate: kills / nFights, ttkMed: quant(T, 0.5), ttkP90: quant(T, 0.9), shotsMed: quant(SH, 0.5), reloads: kills ? rel / kills : 0,
+    avgDmg: avg, hitPct: hits / pel, headPct: hits ? heads / hits : 0,
+    sustained: (b.mag / (1 - (b.keep || 0)) * avg) / (b.mag / (1 - (b.keep || 0)) * gap + rl),
+  };
+}
+// damage of one trigger pull if every pellet connects with the body / head (after armor)
+function idealHit(b, r, armor, head) {
+  const per = shotDamageAt(b, r) / b.pellets;
+  return hitAfterArmor(per * (head ? b.headshot : 1), b.pen, armor) * b.pellets;
+}
+
+// ---------- canvas helpers
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
+function prep(cv, h) {
+  const w = Math.max(260, cv.parentElement.clientWidth || 600), dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {c, w, h};
+}
+// ---------- target dummy (front view; endless HP, counts damage and DPS while the gun fires at its real rate)
+function duelGeom(w, h) {
+  const scale = (h - 100) / 2.1, cx = Math.round(w * 0.5), gy = h - 26;
+  return {scale, cx, gy, px: x => cx + x * scale, py: y => gy - y * scale};
+}
+const KINDS = ['dummy'];
+function dpsAt(d, b, elapsed) {
+  const gap = 60 / b.rpm, first = d.ev.find(e => e.type === 'shot');
+  let t = Math.floor(elapsed * 2) / 2;
+  if (!first || t < first.t) t = elapsed;
+  let total = 0, last = null;
+  for (const e of d.ev) { if (e.t > t) break; if (e.type === 'shot') { total += e.dmg; last = e; } }
+  return last ? total / Math.max(last.t - d.travel + gap - d.f0, gap) : 0;
+}
+function drawDuel(kind, elapsed) {
+  const cv = $('simDuel'), {c, w, h} = prep(cv, 340), G = duelGeom(w, h), d = SIM.du[kind].duel;
+  const fg = cssv('--fg'), mu = cssv('--muted'), ln = cssv('--line-hi'), sunk = cssv('--sunk'), acc = cssv('--accent'), bad = cssv('--bad'), brass = cssv('--brass');
+  c.font = '12px ' + cssv('--f-mono');
+  c.strokeStyle = ln; c.lineWidth = 1; c.beginPath(); c.moveTo(8, G.gy); c.lineTo(w - 8, G.gy); c.stroke();
+  drawPlayer(c, G.px, G.py, fg);
+  // spread cone at this range, centred on the aim point
+  const b = SIM.b, R = SIM.range * Math.tan(b.spread[SIM.stance] * Math.PI / 180), aimY = aimYOf(SIM.zone);
+  c.strokeStyle = mu; c.setLineDash([4, 4]); c.beginPath(); c.arc(G.px(0), G.py(aimY), Math.max(1.5, R * G.scale), 0, 6.2832); c.stroke(); c.setLineDash([]);
+  c.beginPath(); c.moveTo(G.px(-6 / G.scale), G.py(aimY)); c.lineTo(G.px(6 / G.scale), G.py(aimY)); c.moveTo(G.px(0), G.py(aimY) - 6); c.lineTo(G.px(0), G.py(aimY) + 6); c.stroke();
+  c.fillStyle = mu; c.textAlign = 'center'; c.fillText(fx(SIM.range, 0) + ' m · spread ' + fx(b.spread[SIM.stance], 2) + '° = ' + fx(R * 100, 0) + ' cm radius' + (SIM.rec ? ' · recoil uncontrolled' : ' · average recoil control'), G.px(0), h - 8);
+  // tally of everything that has landed so far
+  let total = 0, shots = 0, pel = 0, hit = 0, rl = false, ra = false, ammo = SIM.b.mag, status = 'Press Fire to start';
+  const seen = [];
+  if (d) {
+    status = 'Firing';
+    for (const e of d.ev) {
+      if (e.t > elapsed) break;
+      if (e.type === 'reload') { if (elapsed < e.until) rl = true; continue; }
+      if (e.type === 'reaim') { if (elapsed < e.until) ra = true; continue; }
+      shots++; total += e.dmg;
+      for (const p of e.pts) { pel++; if (p.part !== 'miss') hit++; }
+      seen.push(e);
+    }
+    const done = elapsed >= d.end;
+    status = done ? 'Stopped' : rl ? 'Reloading…' : ra ? 'Re-aiming…' : 'Firing';
+    // rounds left in the magazine: shots leave the barrel d.travel seconds before they land
+    const el2 = elapsed + d.travel;
+    for (const e of d.ev) {
+      if (e.t > el2) break;
+      if (e.type === 'reload') ammo = el2 < e.until ? 0 : b.mag; else if (e.type === 'shot' && !e.kept) ammo--;
+    }
+  }
+  // DPS only changes when a shot lands: damage landed / time from the first trigger pull to the end of the last landed shot's cycle
+  // and the readout is re-sampled twice a second so it stays readable
+  const dps = d ? dpsAt(d, b, elapsed) : 0;
+  // hit marks (recent ones stay brighter), then damage numbers rising off the target
+  seen.slice(-90).forEach((e, i, arr) => {
+    c.globalAlpha = 0.25 + 0.7 * (i + 1) / arr.length;
+    for (const p of e.pts) { c.fillStyle = p.part === 'head' ? bad : p.part === 'body' ? acc : mu; c.beginPath(); c.arc(G.px(p.x), G.py(p.y), p.part === 'miss' ? 2 : 3, 0, 6.2832); c.fill(); }
+  });
+  c.globalAlpha = 1; c.textAlign = 'center'; c.font = 'bold 12px ' + cssv('--f-mono');
+  for (const e of seen) {
+    const age = elapsed - e.t; if (age > 0.7) continue;
+    const hp = e.pts.filter(p => p.part !== 'miss'), n = hp.length;
+    const x = n ? hp.reduce((q, p) => q + p.x, 0) / n : 0, y = n ? hp.reduce((q, p) => q + p.y, 0) / n : aimY;
+    c.globalAlpha = 1 - age / 0.7; c.fillStyle = n ? (hp.some(p => p.part === 'head') ? bad : fg) : mu;
+    c.fillText(n ? '-' + fx(e.dmg, e.dmg < 10 ? 1 : 0) : 'miss', G.px(x) + 26, G.py(y) - age * 40);
+  }
+  c.globalAlpha = 1; c.font = '12px ' + cssv('--f-mono');
+  c.textAlign = 'left'; c.fillStyle = fg; c.fillText(status, 12, 20);
+  c.fillStyle = mu; c.fillText('damage ', 12, 38); c.fillStyle = fg; c.fillText(fx(total, 0), 12 + 7 * 7.3, 38);
+  c.fillStyle = mu; c.fillText('shots  ', 12, 56); c.fillStyle = fg; c.fillText(shots + (pel ? ' · ' + fx(hit / pel * 100, 0) + '% hit' : ''), 12 + 7 * 7.3, 56);
+  c.fillStyle = mu; c.fillText('ammo   ', 12, 74); c.fillStyle = ammo <= Math.max(1, b.mag * 0.2) && d ? bad : fg; c.fillText(ammo + ' / ' + b.mag, 12 + 7 * 7.3, 74);
+  c.fillStyle = acc; c.fillText('● body ', 12, 92); c.fillStyle = bad; c.fillText('● head ', 82, 92); c.fillStyle = mu; c.fillText('● miss', 152, 92);
+  c.textAlign = 'right'; c.fillStyle = mu; c.fillText('DPS', w - 12, 18);
+  c.font = 'bold 30px ' + cssv('--f-mono'); c.fillStyle = brass; c.fillText(fx(dps, 0), w - 12, 48);
+  $('simFire').textContent = d && elapsed < d.end ? 'Stop ■' : 'Fire ▶';
+}
+function duelLoop(kind) {
+  const st = SIM.du[kind], d = st.duel; if (!d) return;
+  const el = (performance.now() - d.start) / 1000 * SIM.speed;
+  drawDuel(kind, el);
+  st.raf = el < d.end ? requestAnimationFrame(() => duelLoop(kind)) : 0;
+}
+function startDuel(kind) {
+  const st = SIM.du[kind]; cancelAnimationFrame(st.raf);
+  const g = GUN_BY_ID[SIM.gun], o = {...simOpts(), hp: Infinity}, b = SIM.b;
+  const f = fight(b, g, o, rng((Math.random() * 4294967296) >>> 0), true, 1500);
+  const first = f.ev.find(e => e.type === 'shot'), travel = SIM.range / Math.max(1, b.speed);
+  st.duel = {ev: f.ev, end: f.t, travel, f0: first ? first.t - travel : 0, start: performance.now()};
+  st.raf = requestAnimationFrame(() => duelLoop(kind));
+}
+function stopDuel(kind) { const st = SIM.du[kind]; cancelAnimationFrame(st.raf); st.raf = 0; st.duel = null; drawDuel(kind, 0); }
+function freezeDuel(kind) {
+  const st = SIM.du[kind]; if (!st.duel) return;
+  const el = (performance.now() - st.duel.start) / 1000 * SIM.speed;
+  cancelAnimationFrame(st.raf); st.raf = 0; st.duel.end = Math.min(st.duel.end, el); drawDuel(kind, el);
+}
+
+// ---------- controls + results
+const simOpts = () => ({range: SIM.range, stance: SIM.stance, zone: SIM.zone, armor: SIM.armor, hp: SIM.hp, recRes: recRes(), reaim: SIM.reaim});
+const simIds = () => Object.values(SIM.att).filter(Boolean);
+// Gunsmith choices live only in the open page (a reload starts fresh); drop what older versions saved
+try { localStorage.removeItem('armory_gunsmith'); } catch (e) {}
+// send a gun (and one attachment) from the Guns / Attachments tab to Gunsmith; attachments that do not fit the new gun are dropped
+function gsAdd(gid, aid) {
+  const g = GUN_BY_ID[gid]; if (!g) return;
+  if (SIM.gun !== gid) { SIM.gun = gid; for (const k of Object.keys(SIM.att)) if (!g.allowed.includes(SIM.att[k])) delete SIM.att[k]; }
+  const a = aid && ATT_BY_ID[aid]; if (a) SIM.att[a.type] = a.id;
+  setTab('sim');
+  renderGunBtn(); renderSimAtts(); renderSimEnch(); updateSim();
+}
+const simEn = () => ({...SIM.ench, capacity: ENCH_NO_CAP.has(SIM.gun) ? 0 : SIM.ench.capacity || 0});
+const dClass = (cur, base, better) => Math.abs(cur - base) < 1e-9 ? '' : ((cur > base) === (better === 'high') ? 'g' : 'b');
+
+function renderGunBtn() {
+  const g = GUN_BY_ID[SIM.gun];
+  $('simGunBtn').innerHTML = `${ico(g.id, 'sm')}<span class="nm">${esc(g.name)}</span><span class="sub">${esc(PACK[g.pack] || g.pack)}</span><span class="car">▾</span>`;
+}
+// all six slot types are always listed; ones this gun cannot take are greyed out
+function renderSimAtts() {
+  const g = GUN_BY_ID[SIM.gun];
+  $('simAtts').innerHTML = SLOT_ORDER.map(s => {
+    const opts = g.slotTypes.includes(s) ? g.allowed.filter(a => (ATT_BY_ID[a] || {}).type === s && (craftOk(ATT_BY_ID[a]) || a === SIM.att[s])) : [];
+    const cur = SIM.att[s] && ATT_BY_ID[SIM.att[s]];
+    if (!opts.length) return `<div class="fld"><span>${esc(ATYPE[s] || s)}</span><button class="slotbtn" type="button" disabled><span class="nm">Not available</span></button></div>`;
+    return `<div class="fld"><span>${esc(ATYPE[s] || s)}</span><button class="slotbtn" type="button" data-slot="${s}" aria-haspopup="dialog">${cur ? ico(cur.id, 'sm') + `<span class="nm">${esc(cur.name)}</span>` : `<span class="nm" style="color:var(--muted)">— none —</span>`}<span class="car">▾</span></button></div>`;
+  }).join('');
+}
+// ---------- picker dialog (big box of items with icons)
+const pk = {opener: null, groups: [], make: null, cur: '', onPick: null, kind: ''};
+const craftOk = x => SHOW_UNCRAFT || x.recipe;
+function pkRender(q) {
+  q = q.trim().toLowerCase();
+  const html = pk.groups.map(gr => {
+    const items = gr.items.filter(i => !q || (i.name + ' ' + (i.sub || '') + ' ' + (i.tags || '')).toLowerCase().includes(q));
+    if (!items.length) return '';
+    return (gr.label ? `<div class="pkgrp">${esc(gr.label)} · ${items.length}</div>` : '') + `<div class="pkgrid">${items.map(i => `<button class="pktile" type="button" data-pk="${esc(i.id)}" aria-pressed="${i.id === pk.cur}">${i.id ? ico(i.id) : '<span class="ico none"></span>'}<b>${esc(i.name)}</b>${i.sub ? `<em>${esc(i.sub)}</em>` : ''}</button>`).join('')}</div>`;
+  }).join('');
+  $('pkBody').innerHTML = html || '<div class="pkempty">Nothing matches.</div>';
+}
+function pkOpen(title, groups, cur, onPick, opener, kind) {
+  Object.assign(pk, {opener, make: typeof groups === 'function' ? groups : () => groups, cur, onPick, kind}); pk.groups = pk.make(); tipHide();
+  $('pkCraft').setAttribute('aria-pressed', SHOW_UNCRAFT);
+  $('pkTitle').textContent = title; $('pkQ').value = ''; pkRender('');
+  $('pk').hidden = false;
+  const sel = $('pkBody').querySelector('[aria-pressed="true"]');
+  if (sel) sel.scrollIntoView({block: 'center'});
+  $('pkQ').focus();
+}
+function pkClose() { tipHide(); $('pk').hidden = true; if (pk.opener && pk.opener.isConnected) pk.opener.focus(); }
+function pickGun(opener) {
+  const groups = () => {
+    const by = {}; for (const g of GUNS) if (g.damage != null && g.rpm && (craftOk(g) || g.id === SIM.gun)) (by[g.type] = by[g.type] || []).push(g);
+    return GUN_ORDER.filter(t => by[t]).map(t => ({label: GTYPE[t], items: by[t].sort((a, b) => a.name.localeCompare(b.name)).map(g => ({id: g.id, name: g.name, sub: PACK[g.pack] || g.pack, tags: g.ammoName}))}));
+  };
+  pkOpen('Choose gun', groups, SIM.gun, id => { SIM.gun = id; SIM.att = {}; renderGunBtn(); renderSimAtts(); renderSimEnch(); updateSim(); }, opener, 'gun');
+}
+// Attachments tab: choose the gun the list is filtered for
+function pickAtGun(opener) {
+  const groups = () => {
+    const by = {}; for (const g of GUNS) if (g.allowed.length && (craftOk(g) || g.id === atGun())) (by[g.type] = by[g.type] || []).push(g);
+    return [{label: '', items: [{id: '', name: 'Any gun', sub: ''}]}, ...GUN_ORDER.filter(t => by[t]).map(t => ({label: GTYPE[t], items: by[t].sort((a, b) => a.name.localeCompare(b.name)).map(g => ({id: g.id, name: g.name, sub: PACK[g.pack] || g.pack, tags: g.ammoName}))}))];
+  };
+  pkOpen('Choose gun', groups, atGun(), id => { st.atGun = id; chips(); table(); }, opener, 'gun');
+}
+function pickAtt(slot, opener) {
+  const g = GUN_BY_ID[SIM.gun];
+  const groups = () => {
+    const items = g.allowed.map(a => ATT_BY_ID[a]).filter(a => a && a.type === slot && (craftOk(a) || a.id === SIM.att[slot])).sort((a, b) => a.name.localeCompare(b.name))
+      .map(a => ({id: a.id, name: a.name, sub: a.zoom && a.zoom.length ? fx(a.zoom[0], 2) + '×' : (PACK[a.pack] || a.pack || '')}));
+    return [{label: '', items: [{id: '', name: 'None', sub: ''}, ...items]}];
+  };
+  pkOpen('Choose ' + (ATYPE[slot] || slot).toLowerCase(), groups, SIM.att[slot] || '', id => { SIM.att[slot] = id; renderSimAtts(); updateSim(); const b = $('simAtts').querySelector(`[data-slot="${slot}"]`); if (b) b.focus(); }, opener, 'att');
+}
+
+// ---------- hover info for attachments (picker tiles and equipped slot buttons)
+function tipShow(id, x, y) {
+  const a = ATT_BY_ID[id]; if (!a) return tipHide();
+  const eff = a.eff && a.eff.length ? a.eff.map(e => `<div class="row"><span>${esc(e.label)}</span><span class="${e.cls}">${esc(e.txt)}</span></div>`).join('') : '<div class="none">No stat changes (sight or cosmetic only)</div>';
+  const t = $('tip');
+  t.innerHTML = `<h4>${esc(a.name)}</h4><div class="meta">${esc(ATYPE[a.type] || a.type)} · ${esc(PACK[a.pack] || a.pack)}</div>${a.desc ? `<p>${esc(a.desc)}</p>` : ''}${eff}`;
+  t.hidden = false;
+  const w = t.offsetWidth, h = t.offsetHeight, vw = innerWidth, vh = innerHeight;
+  let px = x + 16, py = y + 16;
+  if (px + w > vw - 8) px = Math.max(8, x - w - 16);
+  if (py + h > vh - 8) py = Math.max(8, vh - h - 8);
+  t.style.left = px + 'px'; t.style.top = py + 'px';
+}
+function tipHide() { $('tip').hidden = true; }
+function tipId(el) {
+  const t = el && el.closest && el.closest('[data-pk],[data-slot]');
+  if (!t) return null;
+  if (t.dataset.pk !== undefined) return pk.kind === 'att' && t.dataset.pk ? t.dataset.pk : null;
+  return SIM.att[t.dataset.slot] || null;
+}
+document.addEventListener('mouseover', e => { const id = tipId(e.target); if (id) tipShow(id, e.clientX, e.clientY); else tipHide(); });
+document.addEventListener('mousemove', e => { if (!$('tip').hidden) { const id = tipId(e.target); if (id) tipShow(id, e.clientX, e.clientY); else tipHide(); } });
+document.addEventListener('mouseout', e => { if (!e.relatedTarget) tipHide(); });
+document.addEventListener('focusin', e => { const id = tipId(e.target); if (id) { const r = e.target.getBoundingClientRect(); tipShow(id, r.right - 20, r.top); } else tipHide(); });
+document.addEventListener('focusout', tipHide);
+window.addEventListener('scroll', tipHide, true);
+$('pkQ').addEventListener('input', e => pkRender(e.target.value));
+$('pkX').addEventListener('click', pkClose);
+$('pkCraft').addEventListener('click', () => {
+  $('craftBtn').click();   // same switch as the Guns tab
+  $('pkCraft').setAttribute('aria-pressed', SHOW_UNCRAFT);
+  pk.groups = pk.make(); pkRender($('pkQ').value); renderSimAtts();
+});
+$('pk').addEventListener('click', e => {
+  if (e.target === $('pk')) return pkClose();
+  const t = e.target.closest('[data-pk]');
+  if (t) { const id = t.dataset.pk, fn = pk.onPick; pkClose(); fn(id); }
+});
+document.addEventListener('keydown', e => {
+  if ($('pk').hidden) return;
+  if (e.key === 'Escape') { e.preventDefault(); pkClose(); }
+  else if (e.key === 'Tab') {   // keep focus inside the dialog
+    const f = [...$('pk').querySelectorAll('input,button')].filter(x => x.offsetParent !== null);
+    if (!f.length) return;
+    const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+  }
+});
+function renderSimShell() {
+  const left = `
+  <div class="sec"><h3>Gun</h3><button class="slotbtn big" id="simGunBtn" type="button" aria-haspopup="dialog"></button><div class="dim" id="simGunMeta" style="font-size:12px;margin-top:6px"></div></div>
+  <div class="sec"><h3>Attachments</h3><div id="simAtts"></div><button class="chip" id="simClear" type="button">Clear attachments</button></div>
+  <div class="sec"><h3>Enchantments</h3><div id="simEnch"></div></div>
+  <div class="sec"><h3>Target</h3>
+    <label class="fld"><span>Preset</span><select id="simPreset" class="simsel"><option value="">Custom</option>${TARGETS.map((t, i) => `<option value="${i}">${esc(t.name)} · ${fx(t.hp, 0)} hp · ${fx(t.armor, 0)} armor</option>`).join('')}</select></label>
+    <label class="fld"><span>Health</span><input id="simHp" class="simsel" type="number" min="1" step="1"></label>
+    <label class="fld"><span>Armor</span><input id="simArmor" class="simsel" type="number" min="0" max="100" step="1"></label>
+  </div>
+  <div class="sec"><h3>Shooting range</h3>
+    <label class="fld"><span>Range (m)</span><span style="display:flex;gap:8px;align-items:center"><input id="simRange" type="range" min="1" max="120" step="1" style="flex:1;min-width:0"><b id="simRangeVal" style="font-family:var(--f-mono);min-width:3ch;text-align:right"></b></span></label>
+    <div class="fld"><span>Stance</span><div class="chipset" id="simStance">${STANCES.map(([k, l]) => `<button class="chip" type="button" data-stance="${k}">${l}</button>`).join('')}</div></div>
+    <div class="fld"><span>Aim at</span><div class="chipset" id="simZone"><button class="chip" type="button" data-zone="body">Body</button><button class="chip" type="button" data-zone="head">Head</button></div></div>
+    <div class="fld"><span>Recoil</span><div class="chipset" id="simRec"><button class="chip" type="button" data-rec="0" title="Average player: cancels about 70% of the vertical climb and 50% of the sideways drift">Controlled</button><button class="chip" type="button" data-rec="1" title="Never pulls the mouse down">Uncontrolled</button></div></div>
+    <div class="fld"><span>Re-aim</span><div class="chipset" id="simReaim"><button class="chip" type="button" data-reaim="1" title="Stop after a few missed shots, let the recoil settle and aim again">On</button><button class="chip" type="button" data-reaim="0" title="Keep firing even when the aim has drifted off">Off</button></div></div>
+  </div>`;
+  const right = `
+  <div class="sec"><h3>Build vs base</h3><div id="simTable"></div><div class="dim" id="simAtRange" style="font-size:12px;margin-top:8px"></div><div id="simFlags" class="alist" style="margin-top:8px"></div></div>
+  <div class="sec"><h3>Target dummy</h3><div class="dim" style="font-size:12px;margin-bottom:8px">Endless health.</div>
+    <div class="chipset" style="margin-bottom:8px"><button class="chip" id="simFire" type="button">Fire ▶</button>
+    <label class="chipset" for="simSpeed"><span class="lbl">Speed</span><select id="simSpeed" class="sortsel" data-speed><option value="1">1×</option><option value="0.5">½×</option><option value="0.25">¼×</option></select></label></div>
+    <div class="cvwrap"><canvas id="simDuel"></canvas></div></div>
+  <div class="sec"><h3>Against this target</h3><div class="specs" id="simCards"></div></div>
+  <div class="sec"><h3>Recoil pattern</h3><div class="specs" id="simRecCards"></div><div class="cvwrap" style="margin-top:10px"><canvas id="simRecC"></canvas></div></div>
+`;
+  const split = h => h.split(/\n  (?=<div class="sec">)/).map(x => x.trim()).filter(Boolean);
+  const L = split(left), R = split(right);   // L: gun, attachments, target, shooting; R: build, dummy, cards, recoil
+  const cells = [L[0] + L[1] + L[2], R[0], L[3], R[2], L[4], `<div class="simpair">${R[1]}${R[3]}</div>`];
+  $('simGrid').innerHTML = cells.map(c => `<div class="simpanel">${c}</div>`).join('');
+  renderGunBtn();
+  renderSimAtts();
+  renderSimEnch();
+}
+// what a level of each enchantment adds, for the hover text
+function enchTxt(k, l) {
+  if (!l) return 'No enchantment';
+  const pct = v => (v > 0 ? '+' : '−') + Math.abs(Math.round(v * 10) / 10) + '%';
+  switch (k) {
+    case 'firepower': return pct(10 * l) + ' damage';
+    case 'bullseye': return pct(50 * l) + ' headshot damage';
+    case 'deep_impact': return pct(5 * l) + ' armor penetration (added on top of the gun)';
+    case 'punch_through': return '+' + l + ' extra ' + (l > 1 ? 'entities' : 'entity') + ' hit';
+    case 'precision': return pct(-5 * l) + ' spread';
+    case 'capacity': {
+      const g = GUN_BY_ID[SIM.gun], m0 = buildStats(g, simIds(), {...simEn(), capacity: 0}).mag;
+      return pct(25 * l) + ' magazine (' + m0 + ' → ' + Math.max(1, Math.round(m0 * (1 + 0.25 * l))) + ')';
+    }
+    case 'bullet_retention': return pct(5 * l).replace('+', '') + ' chance a shot uses no ammo';
+  }
+  return '';
+}
+function renderSimEnch() {
+  const roman = ['', 'I', 'II', 'III', 'IV', 'V'], noCap = ENCH_NO_CAP.has(SIM.gun);
+  $('simEnch').innerHTML = ENCH.map(([k, name, max, tip]) => {
+    const off = k === 'capacity' && noCap, cur = off ? 0 : SIM.ench[k] || 0;
+    return `<div class="fld"><span title="${esc(tip)}">${esc(name)}</span><div class="chipset">${Array.from({length: max + 1}, (_, i) => `<button class="chip" type="button" data-ench="${k}" data-lvl="${i}" title="${esc(off ? 'This gun cannot take it' : name + (i ? ' ' + roman[i] : '') + ': ' + enchTxt(k, i))}" aria-pressed="${i === cur}"${off && i ? ' disabled' : ''}>${i ? roman[i] : 'Off'}</button>`).join('')}</div></div>`;
+  }).join('');
+}
+function syncSimInputs() {
+  const setv = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
+  setv('simHp', SIM.hp); setv('simArmor', SIM.armor); setv('simRange', SIM.range); $('simRangeVal').textContent = SIM.range;
+  $('simPreset').value = SIM.preset;
+  for (const b of $('simStance').children) b.setAttribute('aria-pressed', b.dataset.stance === SIM.stance);
+  for (const b of $('simZone').children) b.setAttribute('aria-pressed', b.dataset.zone === SIM.zone);
+  for (const b of $('simReaim').children) b.setAttribute('aria-pressed', (b.dataset.reaim === '1') === SIM.reaim);
+  for (const b of $('simRec').children) b.setAttribute('aria-pressed', (b.dataset.rec === '1') === SIM.rec);
+}
+
+// ---------- recoil panel: crosshair path of a sustained spray, with no mouse compensation
+const REC_N = 30;
+function recoilStats(b) {
+  const gap = 60 / b.rpm, c = recoilCurve(b, SIM.stance, null), res = recRes(), pre = recoilPre(b, SIM.stance, REC_N, null, res);
+  let peak = 0; for (let t = 0; t <= (c.p ? c.p.end : 0); t += 0.005) peak = Math.max(peak, Math.abs(kickAt(c.p, t)));
+  const n = Math.min(REC_N, b.mag), last = pre[n - 1] || {p: 0, y: 0};
+  return {gap, peak: peak * res.p, climb: kickAt(c.p, gap) * res.p, drift: kickAt(c.y, gap) * res.y, n, total: last.p, side: last.y, end: Math.max(c.p ? c.p.end : 0, c.y ? c.y.end : 0)};
+}
+function drawRecoil() {
+  const b = SIM.b, o = simOpts(); if (!b) return;
+  const {c, w, h} = prep($('simRecC'), 560), L = 44, R = 12, T = 14, B = 30, pw = w - L - R, ph = h - T - B;
+  const n = Math.min(REC_N, b.mag), gap = 60 / b.rpm, rs = recoilStats(b);
+  // sample a path of the crosshair through the whole spray
+  const res = recRes();
+  const path = rand => {
+    const pts = [[0, 0]]; let p = 0, y = 0;
+    for (let k = 0; k < n; k++) {
+      const cu = recoilCurve(b, o.stance, rand), len = k === n - 1 ? Math.max(rs.end, gap) : gap;
+      for (let t = 0.01; t < len + 1e-9; t += 0.01) pts.push([-(y + kickAt(cu.y, t) * res.y), p + kickAt(cu.p, t) * res.p]);
+      p += kickAt(cu.p, gap) * res.p; y += kickAt(cu.y, gap) * res.y;
+    }
+    return pts;
+  };
+  const mean = path(null), rand = rng(4242), trials = []; for (let i = 0; i < 6; i++) trials.push(path(rand));
+  const sp = b.spread[o.stance] || 0, pre0 = recoilPre(b, o.stance, n, null, res);
+  const all = mean.concat(...trials, ...pre0.map(q => [[-q.y - sp, q.p - sp], [-q.y + sp, q.p + sp]])), aimY = aimYOf(o.zone), deg = v => Math.atan(v / o.range) * 180 / Math.PI;
+  const bx = deg(0.45), by0 = deg(0 - aimY), hy1 = deg(1.8 - aimY);
+  let x0 = Math.min(...all.map(p => p[0]), -bx), x1 = Math.max(...all.map(p => p[0]), bx), y0 = Math.min(...all.map(p => p[1]), by0), y1 = Math.max(...all.map(p => p[1]), hy1);
+  const padx = (x1 - x0) * 0.08 || 0.5, pady = (y1 - y0) * 0.08 || 0.5; x0 -= padx; x1 += padx; y0 -= pady; y1 += pady;
+  // keep degrees square so the path is not distorted
+  const sc = Math.min(pw / (x1 - x0), ph / (y1 - y0)), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const X = x => L + pw / 2 + (x - cx) * sc, Y = y => T + ph / 2 - (y - cy) * sc;
+  const fg = cssv('--fg'), mu = cssv('--muted'), ln = cssv('--line'), acc = cssv('--accent'), bad = cssv('--bad');
+  c.font = '11px ' + cssv('--f-mono'); c.lineWidth = 1; c.strokeStyle = ln; c.fillStyle = mu;
+  // target silhouette at this range, in degrees from the crosshair at rest
+  drawPlayer(c, xm => X(deg(xm)), ym => Y(deg(ym - aimY)), mu);
+  c.strokeStyle = ln; c.beginPath(); c.moveTo(X(0), T); c.lineTo(X(0), T + ph); c.moveTo(L, Y(0)); c.lineTo(L + pw, Y(0)); c.stroke();
+  const line = (pts, col, wd, al) => { c.strokeStyle = col; c.lineWidth = wd; c.globalAlpha = al; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y))); c.stroke(); c.globalAlpha = 1; };
+  for (const t of trials) line(t, mu, 1, 0.55);
+  // stance spread: a cone around the crosshair at every shot, with a random impact per pellet
+  const R2 = sp * sc, ir = rng(777);
+  c.strokeStyle = mu; c.lineWidth = 1; c.globalAlpha = 0.5; c.setLineDash([3, 3]);
+  for (const q of [pre0[0], pre0[pre0.length - 1]]) { c.beginPath(); c.arc(X(-q.y), Y(q.p), Math.max(1, R2), 0, 6.2832); c.stroke(); }
+  c.setLineDash([]); c.globalAlpha = 0.8; c.fillStyle = fg;
+  const per = Math.max(1, Math.min(b.pellets, 12));
+  for (const q of pre0) for (let i = 0; i < per; i++) { const r = sp * Math.sqrt(ir()), a = ir() * 6.2832; c.fillRect(X(-q.y + r * Math.cos(a)) - 1, Y(q.p + r * Math.sin(a)) - 1, 2, 2); }
+  c.globalAlpha = 1;
+  // a dot where each shot fires
+  const pre = recoilPre(b, o.stance, n, null, res); c.fillStyle = bad;
+  pre.forEach((q, k) => { c.beginPath(); c.arc(X(-q.y), Y(q.p), 2.6, 0, 6.2832); c.fill(); if (k === 0 || k === n - 1) { c.fillStyle = fg; c.textAlign = 'left'; c.fillText(String(k + 1), X(-q.y) + 6, Y(q.p) - 4); c.fillStyle = bad; } });
+  c.fillStyle = mu; c.textAlign = 'center';
+  c.fillText('left ←  sideways (°)  → right', L + pw / 2, h - 6);
+  c.save(); c.translate(11, T + ph / 2); c.rotate(-Math.PI / 2); c.fillText('up (°)', 0, 0); c.restore();
+  c.textAlign = 'right'; c.fillText(fx(y1, 1) + '°', L - 5, T + 10); c.fillText(fx(y0, 1) + '°', L - 5, T + ph);
+  c.textAlign = 'left'; c.fillStyle = fg; c.fillText(`player at ${o.range} m`, L + 6, T + ph - 6);
+  
+}
+function recoilCards() {
+  const b = SIM.b, r = recoilStats(b), m = Math.tan(r.total * Math.PI / 180) * SIM.range;
+  const cards = [
+    ['Kick (peak)', fx(r.peak, 2) + '°', 'one shot'],
+    ['Climb per shot', fx(r.climb, 2) + '°', 'at ' + fx(60 / r.gap, 0) + ' rpm'],
+    ['Climb after ' + r.n, fx(r.total, 1) + '°', fx(m, 1) + ' m high at ' + SIM.range + ' m'],
+    ['Recovers in', fx(r.end, 2) + ' s', 'after last shot'],
+  ];
+  $('simRecCards').innerHTML = cards.map(([l, v, e]) => `<div class="spec"><span>${l}</span><b>${v}</b>${e ? ` <em>${e}</em>` : ''}</div>`).join('');
+}
+
+function updateSim(skipCharts) {
+  const g = GUN_BY_ID[SIM.gun];
+  SIM.b = buildStats(g, simIds(), simEn());
+  const b = SIM.b, base = buildStats(g, []), o = simOpts();
+  $('simGunMeta').textContent = `${g.ammoName} · ${GTYPE[g.type] || g.type} · ${(g.modes || []).join('/')} · ${g.reloadType || ''}`;
+  $('simTable').innerHTML = gameStats(g, simIds(), simEn());
+  const dB = shotDamageAt(base, SIM.range), dC = shotDamageAt(b, SIM.range);
+  $('simAtRange').textContent = 'Damage per shot at ' + SIM.range + ' m: ' + fx(dC, 2) + (Math.abs(dC - dB) > 0.005 ? ' (base ' + fx(dB, 2) + ')' : '') + (b.pellets > 1 ? ' across ' + b.pellets + ' pellets' : '');
+  $('simFlags').innerHTML = [b.silenced && 'Suppressed', b.explode && 'Explosive rounds', b.ignite && 'Incendiary'].filter(Boolean).map(t => `<span class="tag">${t}</span>`).join('');
+
+  const r = summarize(b, g, o, 300, 1500);
+  const hitBody = idealHit(b, SIM.range, SIM.armor, false), hitHead = idealHit(b, SIM.range, SIM.armor, true);
+  const cards = [
+    ['Hit chance', fx(r.hitPct * 100, 0) + '%', b.pellets > 1 ? 'of ' + b.pellets + ' pellets' : 'per shot'],
+    ['Per hit (body / head)', fx(hitBody, 1) + ' / ' + fx(hitHead, 1), 'after armor, no spread'],
+    ['Expected per shot', fx(r.avgDmg, 1), 'with misses'],
+    ['Shots to kill', isFinite(r.shotsMed) ? fx(r.shotsMed, 0) : '—', 'median'],
+    ['Time to kill', isFinite(r.ttkMed) ? fx(r.ttkMed, 2) + ' s' : 'no kill', isFinite(r.ttkP90) ? '90%: ' + fx(r.ttkP90, 2) + ' s' : ''],
+    ['Sustained DPS', fx(r.sustained, 0), 'with reloads'],
+  ];
+  $('simCards').innerHTML = cards.map(([l, v, e]) => `<div class="spec"><span>${l}</span><b>${v}</b>${e ? ` <em>${e}</em>` : ''}</div>`).join('');
+  syncSimInputs(); recoilCards();
+  for (const k of KINDS) { if (SIM.du[k].duel) stopDuel(k); else drawDuel(k, 0); }
+  if (!skipCharts) { clearTimeout(SIM.timer); SIM.timer = setTimeout(drawSimCharts, 40); }
+}
+function drawSimCharts() {
+  if (!SIM.b) return;
+  drawRecoil();
+}
+
+function initSim() {
+  if (!SIM.ready) {
+    SIM.ready = true;
+    if (!GUN_BY_ID[SIM.gun]) SIM.gun = GUNS.find(g => g.damage != null).id;
+    const z = TARGETS.findIndex(t => t.name === 'Zombie'); if (z >= 0) { SIM.preset = String(z); SIM.hp = TARGETS[z].hp; SIM.armor = TARGETS[z].armor; }
+    renderSimShell();
+    const wrap = $('simWrap');
+    wrap.addEventListener('change', e => {
+      const t = e.target;
+      if (t.id === 'simPreset') { const p = TARGETS[+t.value]; SIM.preset = t.value; if (p) { SIM.hp = p.hp; SIM.armor = p.armor; } updateSim(); }
+      else if (t.id === 'simSpeed') SIM.speed = +t.value;
+    });
+    wrap.addEventListener('input', e => {
+      const t = e.target, v = parseFloat(t.value);
+      if (t.id === 'simHp' && v > 0) { SIM.hp = v; SIM.preset = ''; updateSim(); }
+      else if (t.id === 'simArmor' && v >= 0) { SIM.armor = Math.min(100, v); SIM.preset = ''; updateSim(); }
+      else if (t.id === 'simRange') { SIM.range = v; updateSim(); }
+    });
+    wrap.addEventListener('click', e => {
+      const t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.stance) { SIM.stance = t.dataset.stance; updateSim(); }
+      else if (t.dataset.zone) { SIM.zone = t.dataset.zone; updateSim(); }
+      else if (t.dataset.reaim) { SIM.reaim = t.dataset.reaim === '1'; updateSim(); }
+      else if (t.dataset.rec) { SIM.rec = t.dataset.rec === '1'; updateSim(); }
+      else if (t.id === 'simGunBtn') pickGun(t);
+      else if (t.dataset.slot) pickAtt(t.dataset.slot, t);
+      else if (t.dataset.ench) { SIM.ench[t.dataset.ench] = +t.dataset.lvl; renderSimEnch(); updateSim(); }
+      else if (t.id === 'simClear') { SIM.att = {}; renderSimAtts(); updateSim(); }
+      else if (t.id === 'simFire') { const st = SIM.du.dummy; if (st.raf && st.duel) freezeDuel('dummy'); else startDuel('dummy'); }
+    });
+    window.addEventListener('resize', () => { if (!$('simWrap').hidden && SIM.b) { drawRecoil(); for (const k of KINDS) { const d = SIM.du[k].duel; drawDuel(k, d ? Math.min(d.end, (performance.now() - d.start) / 1000 * SIM.speed) : 0); } drawSimCharts(); } });
+    if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!$('simWrap').hidden) { updateSim(); } });
+  }
+  updateSim();
+}
+
+
+setTab(st.tab);
+</script>
