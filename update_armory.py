@@ -227,6 +227,28 @@ def build_data(PACK, CACHE, OUT):
         return x if isinstance(x, (int, float)) else d
 
 
+    def heat_of(h):
+        # overheat: +per_shot per round, cools by cooling_multiplier * t^2 after cooling_delay, locks for over_heat_time at max;
+        # rpm and spread scale linearly with heat (min..max multipliers)
+        if not isinstance(h, dict) or not num(h.get('max')):
+            return None
+        return dict(max=h['max'], perShot=num(h.get('per_shot'), 1), cool=num(h.get('cooling_multiplier'), 1), coolDelay=num(h.get('cooling_delay'), 0),
+                    overheat=num(h.get('over_heat_time'), 0), inaccMin=num(h.get('min_inaccuracy'), 1), inaccMax=num(h.get('max_inaccuracy'), 1),
+                    rpmMin=num(h.get('min_rpm_mod'), 1), rpmMax=num(h.get('max_rpm_mod'), 1))
+
+    def charge_of(c):
+        # charging: per fire mode, progress grows increase_per_tick (20 ticks/s) until max_charge (hold type: fire_threshold)
+        if not isinstance(c, dict):
+            return None
+        out = {}
+        for mode, v in c.items():
+            if not isinstance(v, dict) or not num(v.get('increase_per_tick')):
+                continue
+            kind = v.get('type', 'auto')
+            goal = num(v.get('fire_threshold') if kind == 'hold' else v.get('max_charge'), 0)
+            out[mode] = dict(type=kind, time=round(goal / v['increase_per_tick'] / 20, 3), cooldown=bool(v.get('charge_during_cooldown')))
+        return out or None
+
     G = []
     for gid, g in sorted(guns.items()):
         idx, dat = g['idx'], g['data']
@@ -267,7 +289,7 @@ def build_data(PACK, CACHE, OUT):
             move=dat.get('movement_speed'),
             hip=inacc.get('stand'), aimInacc=inacc.get('aim'), moveInacc=inacc.get('move'),
             inacc={k: inacc.get(k) for k in ('stand', 'move', 'sneak', 'lie', 'aim')},
-            recoilV=pitch, recoilH=yaw, heat=bool(dat.get('heat')),
+            recoilV=pitch, recoilH=yaw, heat=heat_of(dat.get('heat')), charge=charge_of(dat.get('charging')),
             recKeys={ax: [[k['time'], k['value'][0], k['value'][1]] for k in sorted(rec.get(ax) or [], key=lambda k: k['time'])] for ax in ('pitch', 'yaw')},
             crawlRec=dat.get('crawl_recoil_multiplier', 0.5),
             slotTypes=dat.get('allow_attachment_types', []),
