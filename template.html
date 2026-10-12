@@ -118,6 +118,9 @@ h1 small{display:block;font:500 12px/1.4 var(--f-mono);letter-spacing:.08em;colo
 .ico.sm{width:26px;height:26px;image-rendering:pixelated}
 .ing{display:flex;gap:8px;align-items:center;min-width:0}
 .ico.big{float:right;width:72px;height:72px;margin:0 0 8px 12px}
+table.big .namecell .ico{width:42px;height:42px}
+table.big .namecell .nm{font-size:15px}
+table.big tbody td{font-size:14px;padding:9px 8px}
 .namecell{display:flex;gap:9px;align-items:center;min-width:0}
 .namecell>div{min-width:0}
 .ledger{border:1px solid var(--line);background:var(--panel);overflow-x:auto;max-height:78vh;overflow-y:auto}
@@ -171,7 +174,7 @@ details summary b{color:var(--fg)}
 
 <div class="wrap">
   <header>
-    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack <span id="packVer">CB 5.11.19</span> · by naizu0209 · <span id="webVer">v1.1.8</span></small></h1>
+    <h1>DeceasedCraft Armory<small>TaCZ guns, attachments and ammo · pack <span id="packVer">CB 5.11.19</span> · by naizu0209 · <span id="webVer">v1.1.9</span></small></h1>
     <div class="tally" id="tally"></div>
   </header>
 
@@ -341,7 +344,8 @@ function effects(a) {
   }
   if (a.zoom && a.zoom.length) out.unshift({label: 'Zoom', txt: a.zoom.map(z => fx(z, 2) + '×').join(' / '), cls: ''});
   if (a.weight) out.push({label: 'Weight', txt: '+' + fx(a.weight) + ' kg', cls: 'b'});
-  return out;
+  const ord = {g: 0, '': 1, b: 2};
+  return out.map((e, i) => [e, i]).sort((x, y) => ord[x[0].cls] - ord[y[0].cls] || x[1] - y[1]).map(x => x[0]);
 }
 // ---- numeric attachment attributes (sortable)
 // same order as the gun table and sheet: damage, pen, fire rate, then handling
@@ -511,6 +515,7 @@ function chips() {
 function table() {
   const cols = COLS[st.tab], [sk, sd] = st.sort[st.tab];
   $('tbl').tHead.innerHTML = '<tr>' + cols.map(c => `<th data-k="${c.k}" class="${c.n ? 'num' : ''}" ${c.k === sk ? `data-dir="${sd}"` : ''}>${c.t}</th>`).join('') + '</tr>';
+  $('tbl').classList.toggle('big', st.tab !== 'ammo');
   const r = rows();
   $('count').textContent = `${r.length} of ${SOURCES[st.tab].length}`;
   const sel = st.sel[st.tab];
@@ -568,7 +573,7 @@ function gameStats(g, ids, en, opt) {
     const txt = (pre || '') + c.toFixed(d) + u + (diff === 0 ? '' : ` <em class="${cls}">(${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(d)}${u === '%' ? '%' : ''})</em>`);
     return `<div class="gs-r"><span class="gs-l">${l}</span><span class="gs-b"><i style="width:${(lo * 100).toFixed(2)}%"></i>${hi > lo ? `<i class="${cls || 'g'}" style="width:${((hi - lo) * 100).toFixed(2)}%"></i>` : ''}</span><span class="gs-v">${txt}</span></div>`;
   }).join('');
-  return `<div class="gs"><div class="gs-h"><kbd>S</kbd><span>Fire Mode: ${esc(mode)}</span></div>${html}<div class="gs-n">Bars use TaCZ's own scales. Ammo Speed is the pack value; this pack doubles it in flight.</div></div>`;
+  return `<div class="gs"><div class="gs-h"${opt && g.modes && g.modes.length > 1 ? ' data-cycle="1" title="Click to switch fire mode" style="cursor:pointer"' : ''}><kbd>S</kbd><span>Fire Mode: ${esc(mode)}</span></div>${html}<div class="gs-n">Bars use TaCZ's own scales. Ammo Speed is the pack value; this pack doubles it in flight.</div></div>`;
 }
 
 function gunSheet(g) {
@@ -649,8 +654,8 @@ function attFx(a, g, title) {
   ].map(([l, f, d, hi, u]) => {
     const x = f(b0), y = f(b1); if (!isFinite(x) || !isFinite(y) || +(y - x).toFixed(d) === 0) return '';
     const c = (y > x) === !!hi ? 'g' : 'b';
-    return spec(l, `${x.toFixed(d)} → <span class="nv ${c}">${y.toFixed(d)}${u}</span>`);
-  }).join('');
+    return [c, spec(l, `${x.toFixed(d)} → <span class="nv ${c}">${y.toFixed(d)}${u}</span>`)];
+  }).filter(Boolean).sort((x, y) => (x[0] === 'g' ? 0 : 1) - (y[0] === 'g' ? 0 : 1)).map(x => x[1]).join('');
   return `<div class="sec">${head}${rows ? `<div class="specs">${rows}</div>` : '<div class="dim">No stat change on this gun.</div>'}</div>`;
 }
 // attachment sheet: its effect on the Gunsmith build's gun (the gun filter does not matter)
@@ -844,7 +849,7 @@ const ENCH_NO_CAP = new Set(D.ench && D.ench.noCap ? D.ench.noCap : ['tacz:db_sh
 // fire-mode adjustments (pack fire_mode_adjust, added to the base value) and dual wield (TaCZ Dual Wield: both guns fire, camera recoil multiplied)
 const DUAL = D.dual || {};
 const dualOk = g => !!g && !(DUAL.denied || []).includes(g.id) && ((DUAL.ids || []).includes(g.id) || (DUAL.types || []).includes(g.type));
-const modeAdjOk = g => !!g && (g.modes || []).length > 1 && !!g.modeAdj;
+const modeAdjOk = g => !!g && (g.modes || []).length > 1;
 function buildStats(g, ids, en, opt) {
   en = en || {};
   const adj = (opt && opt.mode && g.modeAdj && g.modeAdj[opt.mode]) || {}, A = k => adj[k] || 0;
@@ -1153,8 +1158,9 @@ const simOpts = () => ({range: SIM.range, stance: SIM.stance, zone: SIM.zone, ar
 const simIds = () => Object.values(SIM.att).filter(Boolean);
 const simOpt = () => ({mode: SIM.mode, dual: SIM.dual});
 const MODE_NAME = {auto: 'Auto', semi: 'Semi', burst: 'Burst'};
-// three builds: the open one is saved into its slot on every change; picking another slot loads it (an empty slot starts as a copy of the open build). They live only in the open page.
+// three builds: the open one is saved into its slot on every change; picking another slot loads it (an empty slot starts fresh with the default gun). They live only in the open page.
 const BUILD_SLOTS = 3;
+const DEFAULT_GUN = SIM.gun;
 SIM.slots = Array(BUILD_SLOTS).fill(null); SIM.slot = 0;
 $('simBuilds').addEventListener('click', e => { const t = e.target.closest('button'); if (t && t.dataset.build) loadBuild(+t.dataset.build); });
 const snapBuild = () => ({gun: SIM.gun, att: {...SIM.att}, ench: {...SIM.ench}, mode: SIM.mode, dual: SIM.dual});
@@ -1166,7 +1172,7 @@ function renderBuilds() {
 }
 function loadBuild(i) {
   SIM.slots[SIM.slot] = snapBuild();
-  if (!SIM.slots[i]) SIM.slots[i] = snapBuild();
+  if (!SIM.slots[i]) SIM.slots[i] = {gun: DEFAULT_GUN, att: {}, ench: {}, mode: '', dual: false};
   SIM.slot = i;
   const b = SIM.slots[i];
   SIM.gun = b.gun; SIM.att = {...b.att}; SIM.ench = {...b.ench}; SIM.mode = b.mode; SIM.modeFor = b.gun; SIM.dual = b.dual;
@@ -1496,6 +1502,7 @@ function initSim() {
       else if (t.id === 'simRange') { SIM.range = v; updateSim(); }
     });
     wrap.addEventListener('click', e => {
+      if (e.target.closest('[data-cycle]')) { const ms = (GUN_BY_ID[SIM.gun] || {}).modes || []; if (ms.length > 1) { SIM.mode = ms[(ms.indexOf(SIM.mode) + 1) % ms.length]; updateSim(); } return; }
       const t = e.target.closest('button'); if (!t) return;
       if (t.dataset.stance) { SIM.stance = t.dataset.stance; updateSim(); }
       else if (t.dataset.zone) { SIM.zone = t.dataset.zone; updateSim(); }
